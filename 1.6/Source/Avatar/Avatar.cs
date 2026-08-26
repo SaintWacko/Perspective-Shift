@@ -76,7 +76,7 @@ namespace PerspectiveShift
 
             if (passedOut && pawn.CurJobDef != JobDefOf.LayDown)
             {
-                if (pawn.Drafted) pawn.drafter.Drafted = false;
+                if (pawn.Drafted && pawn.drafter != null) pawn.drafter.Drafted = false;
                 Job sleepJob = JobMaker.MakeJob(JobDefOf.LayDown, pawn.Position);
                 sleepJob.forceSleep = true;
                 pawn.jobs.StartJob(sleepJob, JobCondition.InterruptForced);
