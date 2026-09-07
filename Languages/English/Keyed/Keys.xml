@@ -82,6 +82,10 @@
     <PS_HaulingCursorDesc>While you are carrying something, the cursor becomes a drop marker, replacing the aiming reticle even while drafted.</PS_HaulingCursorDesc>
     <PS_EatTooltips>Food tooltips</PS_EatTooltips>
     <PS_EatTooltipsDesc>Hovering food within reach shows a hint over it reminding you that double-clicking eats it.</PS_EatTooltipsDesc>
+    <PS_DrugTooltips>Drug tooltips</PS_DrugTooltips>
+    <PS_DrugTooltipsDesc>Show a tooltip with the drug's name and basic stats when standing over one.</PS_DrugTooltipsDesc>
+    <PS_DisableDoubleClickDrug>Disable double-click to ingest drugs</PS_DisableDoubleClickDrug>
+    <PS_DisableDoubleClickDrugDesc>Stop a double-click on a held drug from making the avatar ingest it.</PS_DisableDoubleClickDrugDesc>
     <PS_HintDps>DPS</PS_HintDps>
     <PS_HintArmorPenetration>AP</PS_HintArmorPenetration>
     <PS_HintArmorSharp>Sharp</PS_HintArmorSharp>
@@ -89,6 +93,8 @@
     <PS_HintInsulationCold>Cold</PS_HintInsulationCold>
     <PS_HintInsulationHeat>Heat</PS_HintInsulationHeat>
     <PS_HintNutrition>Nutrition</PS_HintNutrition>
+    <PS_HintJoy>Joy</PS_HintJoy>
+    <PS_HintAddictiveness>Addiction</PS_HintAddictiveness>
     <PS_ClickAndHoldToHarvest>Click and hold to harvest</PS_ClickAndHoldToHarvest>
     <PS_ClickToHarvest>Click to harvest</PS_ClickToHarvest>
     <PS_HarvestTooltips>Harvest tooltips</PS_HarvestTooltips>
@@ -96,6 +102,7 @@
     <PS_DoubleClickToEquip>Double-click to equip</PS_DoubleClickToEquip>
     <PS_DoubleClickToWear>Double-click to wear</PS_DoubleClickToWear>
     <PS_DoubleClickToEat>Double-click to eat</PS_DoubleClickToEat>
+    <PS_DoubleClickToIngest>Double-click to ingest</PS_DoubleClickToIngest>
     <PS_WashYourself>Wash yourself</PS_WashYourself>
     <PS_DrinkWater>Drink water</PS_DrinkWater>
     <PS_RelieveBladder>Relieve bladder in water</PS_RelieveBladder>
@@ -243,6 +250,10 @@
     <PS_ChopCursorDesc>Swaps the cursor to an axe when hovering over a tree your character could chop.</PS_ChopCursorDesc>
     <PS_HarvestCursor>Harvest cursor</PS_HarvestCursor>
     <PS_HarvestCursorDesc>Swaps the cursor to a sickle when hovering over a plant your character could harvest.</PS_HarvestCursorDesc>
+    <PS_CutCursor>Cut cursor</PS_CutCursor>
+    <PS_CutCursorDesc>Show a scythe cursor when holding left click would cut a plant marked for cutting.</PS_CutCursorDesc>
+    <PS_TraverseCursor>Traverse cursor</PS_TraverseCursor>
+    <PS_TraverseCursorDesc>Show a cursor when hovering stairs, ladders or an elevator the avatar can use to change level. Requires As above, So below II.</PS_TraverseCursorDesc>
     <PS_SleepCursor>Sleep cursor</PS_SleepCursor>
     <PS_SleepCursorDesc>Swaps the cursor when hovering over a bed your character could sleep in. Hidden while you are already resting.</PS_SleepCursorDesc>
     <PS_ResearchCursor>Research cursor</PS_ResearchCursor>

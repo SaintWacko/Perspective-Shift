@@ -1,4 +1,5 @@
 using RimWorld;
+using RimWorld.Planet;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -32,6 +33,12 @@ namespace PerspectiveShift
 
         private static Texture2D _harvestCursorTex;
         public static Texture2D HarvestCursorTex => _harvestCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Harvest");
+
+        private static Texture2D _cutCursorTex;
+        public static Texture2D CutCursorTex => _cutCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Scythe");
+
+        private static Texture2D _traverseCursorTex;
+        public static Texture2D TraverseCursorTex => _traverseCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Traverse");
 
         private static Texture2D _sleepCursorTex;
         public static Texture2D SleepCursorTex => _sleepCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Sleep");
@@ -328,7 +335,8 @@ namespace PerspectiveShift
                     Find.Selector.Deselect(pawn);
             }
 
-            bool cursorBlocked = mouseOverUI || mouseOverGizmo || State.ControlsFrozen || Find.Targeter.IsTargeting;
+            bool cursorBlocked = mouseOverUI || mouseOverGizmo || State.ControlsFrozen || Find.Targeter.IsTargeting
+                || WorldRendererUtility.WorldSelected;
 
             if (PerspectiveShiftMod.settings.haulingCursor && CarriedThing != null && !pawn.InMentalState && !cursorBlocked)
             {
@@ -366,6 +374,8 @@ namespace PerspectiveShift
             Build,
             Chop,
             Harvest,
+            Cut,
+            Traverse,
             Sleep,
             Research,
             Roof,
@@ -378,6 +388,8 @@ namespace PerspectiveShift
                 case CursorJobHint.Build: return BuildCursorTex;
                 case CursorJobHint.Chop: return ChopCursorTex;
                 case CursorJobHint.Harvest: return HarvestCursorTex;
+                case CursorJobHint.Cut: return CutCursorTex;
+                case CursorJobHint.Traverse: return TraverseCursorTex;
                 case CursorJobHint.Sleep: return SleepCursorTex;
                 case CursorJobHint.Research: return ResearchCursorTex;
                 case CursorJobHint.Roof: return RoofCursorTex;
@@ -451,18 +463,47 @@ namespace PerspectiveShift
                     target = things[i];
                     return CursorJobHint.Build;
                 }
+
+                for (int i = 0; i < things.Count; i++)
+                {
+                    if (!CanRepair(things[i])) continue;
+
+                    target = things[i];
+                    return CursorJobHint.Build;
+                }
             }
 
-            if (settings.chopCursor || settings.harvestCursor)
+            if (settings.traverseCursor && ModCompatibility.AsAboveSoBelowAvailable)
+            {
+                for (int i = 0; i < things.Count; i++)
+                {
+                    if (!ModCompatibility.IsLevelLink(things[i])) continue;
+                    if (things[i] is not Building_Door door || !door.PawnCanOpen(pawn)) continue;
+
+                    target = things[i];
+                    return CursorJobHint.Traverse;
+                }
+            }
+
+            if (settings.chopCursor || settings.harvestCursor || settings.cutCursor)
             {
                 var plant = cell.GetPlant(pawn.Map);
-                if (plant != null && CanHarvestNow(plant))
+                if (plant != null)
                 {
-                    bool isTree = plant.def.plant.IsTree;
-                    if (isTree ? settings.chopCursor : settings.harvestCursor)
+                    if (settings.cutCursor && CanCutPlantNow(plant))
                     {
                         target = plant;
-                        return isTree ? CursorJobHint.Chop : CursorJobHint.Harvest;
+                        return CursorJobHint.Cut;
+                    }
+
+                    if (CanHarvestNow(plant))
+                    {
+                        bool isTree = plant.def.plant.IsTree;
+                        if (isTree ? settings.chopCursor : settings.harvestCursor)
+                        {
+                            target = plant;
+                            return isTree ? CursorJobHint.Chop : CursorJobHint.Harvest;
+                        }
                     }
                 }
             }
@@ -496,6 +537,31 @@ namespace PerspectiveShift
             }
 
             return CursorJobHint.None;
+        }
+
+        private bool CanCutPlantNow(Plant plant)
+        {
+            if (plant.def.plant.IsTree) return false;
+            if (pawn.Map.designationManager.DesignationOn(plant, DesignationDefOf.CutPlant) == null) return false;
+            if (pawn.WorkTypeIsDisabled(WorkTypeDefOf.PlantCutting)) return false;
+            if (!PlantUtility.PawnWillingToCutPlant_Job(plant, pawn)) return false;
+
+            return pawn.CanReserve(plant, 1, -1, null, true);
+        }
+
+        private bool CanRepair(Thing thing)
+        {
+            if (thing is not Building building) return false;
+            if (!RepairUtility.PawnCanRepairNow(pawn, building)) return false;
+            if (pawn.Faction == Faction.OfPlayer && !pawn.Map.areaManager.Home[building.Position]) return false;
+            if (building.IsBurning()) return false;
+
+            var designations = pawn.Map.designationManager;
+            if (designations.DesignationOn(building, DesignationDefOf.Deconstruct) != null) return false;
+            if (building.def.mineable && designations.DesignationAt(building.Position, DesignationDefOf.Mine) != null) return false;
+            if (building.def.mineable && designations.DesignationAt(building.Position, DesignationDefOf.MineVein) != null) return false;
+
+            return pawn.CanReserve(building, 1, -1, null, true);
         }
 
         private bool CanBuildRoofAt(IntVec3 cell)

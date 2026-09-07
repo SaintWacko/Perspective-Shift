@@ -24,6 +24,7 @@ namespace PerspectiveShift
         public static readonly bool ProcessorFrameworkAvailable;
         public static readonly bool RimbodyAvailable;
         public static readonly bool RimbodyChunkWorkoutsAvailable;
+        public static readonly bool AsAboveSoBelowAvailable;
         public static readonly bool DubsBadHygieneAvailable;
         public static readonly bool ThemingModAvailable;
 
@@ -75,6 +76,9 @@ namespace PerspectiveShift
         private static MethodInfo addIngredientMethod;
         private static Type processFilterType;
         private static FieldInfo allowedIngredientsField;
+
+        private static Type abStairsType;
+        private static PropertyInfo abCounterpartsProperty;
 
         private static Type rimbodyDBType;
         private static MethodInfo compPhysiqueMethod;
@@ -155,6 +159,10 @@ namespace PerspectiveShift
                 RimbodyAvailable = false;
 
             RimbodyChunkWorkoutsAvailable = ModsConfig.IsActive("Maux36.Rimbody") && InitRimbodyChunkCompat();
+
+            AsAboveSoBelowAvailable = ModsConfig.IsActive("astryl.AsAboveSoBelow2");
+            if (AsAboveSoBelowAvailable && !InitAsAboveSoBelowCompat())
+                AsAboveSoBelowAvailable = false;
 
             DubsBadHygieneAvailable = ModsConfig.IsActive("Dubwise.DubsBadHygiene") || ModsConfig.IsActive("Dubwise.DubsBadHygiene.Lite");
             if (DubsBadHygieneAvailable && !InitDBHCompat())
@@ -319,6 +327,21 @@ namespace PerspectiveShift
             if (!Require(ref doTryGiveJobCardioMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoCardioBuilding"), "DoTryGiveJob"), "DoTryGiveJob method", "Rimbody")) return false;
             if (!Require(ref doTryGiveJobBalanceMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoBalanceBuilding"), "DoTryGiveTargetJob"), "DoTryGiveTargetJob method", "Rimbody")) return false;
             return true;
+        }
+
+        private static bool InitAsAboveSoBelowCompat()
+        {
+            if (!Require(ref abStairsType, () => AccessTools.TypeByName("AsAboveSoBelow.Building_ABStairs2"), "Building_ABStairs2 type", "AsAboveSoBelow")) return false;
+            if (!Require(ref abCounterpartsProperty, () => AccessTools.Property(abStairsType, "Counterparts"), "Counterparts property", "AsAboveSoBelow")) return false;
+            return true;
+        }
+
+        public static bool IsLevelLink(Thing thing)
+        {
+            if (!AsAboveSoBelowAvailable || thing == null) return false;
+            if (!abStairsType.IsInstanceOfType(thing)) return false;
+
+            return abCounterpartsProperty.GetValue(thing, null) is ICollection counterparts && counterparts.Count > 0;
         }
 
         private static bool InitRimbodyChunkCompat()

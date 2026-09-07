@@ -89,6 +89,11 @@ namespace PerspectiveShift
                 return pawn.jobs.TryTakeOrderedJob(job);
             }
 
+            if (!PerspectiveShiftMod.settings.disableDoubleClickDrug && Event.current.clickCount == 2 && TryMakeDrugIngestJob(pawn, carriedThing, out Job drugJob))
+            {
+                return pawn.jobs.TryTakeOrderedJob(drugJob);
+            }
+
             if (!PerspectiveShiftMod.settings.disableDoubleClickEat && Event.current.clickCount == 2 && TryMakeIngestJob(pawn, carriedThing, out Job ingestJob))
             {
                 return pawn.jobs.TryTakeOrderedJob(ingestJob);
@@ -1070,12 +1075,42 @@ namespace PerspectiveShift
         {
             job = null;
             if (pawn.needs?.food == null) return false;
+            if (item.def.IsDrug) return false;
             if (!item.def.IsNutritionGivingIngestible) return false;
             if (!pawn.WillEat(item, pawn, true)) return false;
 
             var foodDef = FoodUtility.GetFinalIngestibleDef(item);
             job = JobMaker.MakeJob(JobDefOf.Ingest, item);
             job.count = FoodUtility.WillIngestStackCountOf(pawn, foodDef, FoodUtility.NutritionForEater(pawn, item));
+            job.playerForced = true;
+            return true;
+        }
+
+        public static bool TryMakeDrugIngestJob(Pawn pawn, Thing item, out Job job)
+        {
+            job = null;
+            if (!item.def.IsDrug || item.def.ingestible == null) return false;
+            if (!item.def.ingestible.showIngestFloatOption) return false;
+            if (!item.IngestibleNow || !pawn.RaceProps.CanEverEat(item.def)) return false;
+            if (!pawn.DrugIsSuitable(item.def)) return false;
+            if (item.def.IsNonMedicalDrug && !pawn.CanTakeDrug(item.def)) return false;
+            if (FoodUtility.InappropriateForTitle(item.def, pawn, true)) return false;
+
+            if (ModsConfig.IdeologyActive && !PawnUtility.CanTakeDrugForDependency(pawn, item.def))
+            {
+                if (!new HistoryEvent(HistoryEventDefOf.IngestedDrug, pawn.Named(HistoryEventArgsNames.Doer)).Notify_PawnAboutToDo_Job()) return false;
+                if (item.def.IsNonMedicalDrug
+                    && !new HistoryEvent(HistoryEventDefOf.IngestedRecreationalDrug, pawn.Named(HistoryEventArgsNames.Doer)).Notify_PawnAboutToDo_Job()) return false;
+                if (item.def.ingestible.drugCategory == DrugCategory.Hard
+                    && !new HistoryEvent(HistoryEventDefOf.IngestedHardDrug, pawn.Named(HistoryEventArgsNames.Doer)).Notify_PawnAboutToDo_Job()) return false;
+            }
+
+            int count = FoodUtility.GetMaxAmountToPickup(item, pawn,
+                FoodUtility.WillIngestStackCountOf(pawn, item.def, FoodUtility.NutritionForEater(pawn, item)));
+            if (count <= 0) return false;
+
+            job = JobMaker.MakeJob(JobDefOf.Ingest, item);
+            job.count = count;
             job.playerForced = true;
             return true;
         }

@@ -53,6 +53,7 @@ namespace PerspectiveShift
             var viewRect = new Rect(0f, 0f, inner.width - 30f, scrollHeight);
             Widgets.BeginScrollView(inner, ref scrollPosition, viewRect);
             var listing = new Listing_Standard();
+            listing.maxOneColumn = true;
             listing.Begin(viewRect);
             var startY = listing.curY;
 
@@ -141,9 +142,11 @@ namespace PerspectiveShift
                     settings.requireHeldClickForJobs = d.requireHeldClickForJobs;
                     settings.disableDoubleClickEquip = d.disableDoubleClickEquip;
                     settings.disableDoubleClickEat = d.disableDoubleClickEat;
+                    settings.disableDoubleClickDrug = d.disableDoubleClickDrug;
                     settings.weaponTooltips = d.weaponTooltips;
                     settings.apparelTooltips = d.apparelTooltips;
                     settings.eatTooltips = d.eatTooltips;
+                    settings.drugTooltips = d.drugTooltips;
                     settings.harvestTooltips = d.harvestTooltips;
                     break;
 
@@ -154,6 +157,8 @@ namespace PerspectiveShift
                     settings.roofCursor = d.roofCursor;
                     settings.chopCursor = d.chopCursor;
                     settings.harvestCursor = d.harvestCursor;
+                    settings.cutCursor = d.cutCursor;
+                    settings.traverseCursor = d.traverseCursor;
                     settings.sleepCursor = d.sleepCursor;
                     settings.researchCursor = d.researchCursor;
                     break;
@@ -228,6 +233,7 @@ namespace PerspectiveShift
 
             listing.CheckboxLabeled("PS_DisableDoubleClickEquip".Translate(), ref settings.disableDoubleClickEquip, "PS_DisableDoubleClickEquipDesc".Translate());
             listing.CheckboxLabeled("PS_DisableDoubleClickEat".Translate(), ref settings.disableDoubleClickEat, "PS_DisableDoubleClickEatDesc".Translate());
+            listing.CheckboxLabeled("PS_DisableDoubleClickDrug".Translate(), ref settings.disableDoubleClickDrug, "PS_DisableDoubleClickDrugDesc".Translate());
             if (!settings.disableDoubleClickEquip)
             {
                 listing.CheckboxLabeled("PS_WeaponTooltips".Translate(), ref settings.weaponTooltips, "PS_WeaponTooltipsDesc".Translate());
@@ -236,6 +242,10 @@ namespace PerspectiveShift
             if (!settings.disableDoubleClickEat)
             {
                 listing.CheckboxLabeled("PS_EatTooltips".Translate(), ref settings.eatTooltips, "PS_EatTooltipsDesc".Translate());
+            }
+            if (!settings.disableDoubleClickDrug)
+            {
+                listing.CheckboxLabeled("PS_DrugTooltips".Translate(), ref settings.drugTooltips, "PS_DrugTooltipsDesc".Translate());
             }
             listing.CheckboxLabeled("PS_HarvestTooltips".Translate(), ref settings.harvestTooltips, "PS_HarvestTooltipsDesc".Translate());
         }
@@ -248,6 +258,8 @@ namespace PerspectiveShift
             listing.CheckboxLabeled("PS_RoofCursor".Translate(), ref settings.roofCursor, "PS_RoofCursorDesc".Translate());
             listing.CheckboxLabeled("PS_ChopCursor".Translate(), ref settings.chopCursor, "PS_ChopCursorDesc".Translate());
             listing.CheckboxLabeled("PS_HarvestCursor".Translate(), ref settings.harvestCursor, "PS_HarvestCursorDesc".Translate());
+            listing.CheckboxLabeled("PS_CutCursor".Translate(), ref settings.cutCursor, "PS_CutCursorDesc".Translate());
+            listing.CheckboxLabeled("PS_TraverseCursor".Translate(), ref settings.traverseCursor, "PS_TraverseCursorDesc".Translate());
             listing.CheckboxLabeled("PS_SleepCursor".Translate(), ref settings.sleepCursor, "PS_SleepCursorDesc".Translate());
             listing.CheckboxLabeled("PS_ResearchCursor".Translate(), ref settings.researchCursor, "PS_ResearchCursorDesc".Translate());
         }

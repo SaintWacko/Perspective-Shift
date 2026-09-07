@@ -70,6 +70,9 @@ namespace PerspectiveShift
         private static Texture2D _eatIcon;
         private static Texture2D EatIcon => _eatIcon ??= ContentFinder<Texture2D>.Get("Storage/Eat");
 
+        private static Texture2D _ingestIcon;
+        private static Texture2D IngestIcon => _ingestIcon ??= ContentFinder<Texture2D>.Get("Storage/IngestIcon");
+
         private static Texture2D _arrowUpIcon;
         private static Texture2D ArrowUpIcon => _arrowUpIcon ??= ContentFinder<Texture2D>.Get("UI/Buttons/ReorderUp");
 
@@ -876,6 +879,7 @@ namespace PerspectiveShift
             bool weaponHints = ShowWeaponHints;
             bool apparelHints = ShowApparelHints;
             bool eatHints = ShowEatHints;
+            bool drugHints = ShowDrugHints;
             var things = cell.GetThingList(pawn.Map);
             for (int i = 0; i < things.Count; i++)
             {
@@ -889,6 +893,14 @@ namespace PerspectiveShift
                     label = (isApparel ? "PS_DoubleClickToWear" : "PS_DoubleClickToEquip").Translate();
                     icon = isApparel ? WearIcon : EquipIcon;
                     BuildGearHintStats(thing);
+                    return thing;
+                }
+
+                if (drugHints && TryMakeDrugIngestJob(pawn, thing, out _))
+                {
+                    label = "PS_DoubleClickToIngest".Translate();
+                    icon = IngestIcon;
+                    BuildDrugHintStats(thing);
                     return thing;
                 }
 
@@ -952,6 +964,15 @@ namespace PerspectiveShift
             {
                 var settings = PerspectiveShiftMod.settings;
                 return settings.eatTooltips && !settings.disableDoubleClickEat;
+            }
+        }
+
+        private static bool ShowDrugHints
+        {
+            get
+            {
+                var settings = PerspectiveShiftMod.settings;
+                return settings.drugTooltips && !settings.disableDoubleClickDrug;
             }
         }
 

@@ -65,6 +65,41 @@ namespace PerspectiveShift
             AddHintStat("PS_HintNutrition".Translate(), FoodUtility.NutritionForEater(pawn, food), 0f, HintStatFormat.Nutrition);
         }
 
+        private void BuildDrugHintStats(Thing drug)
+        {
+            equipHintTitle = null;
+            equipHintQuality = null;
+            equipHintStatCount = 0;
+            if (drug == null) return;
+
+            SetHintIdentity(drug);
+
+            var def = drug.def;
+            if (def.IsNutritionGivingIngestible)
+            {
+                AddHintStat("PS_HintNutrition".Translate(), FoodUtility.NutritionForEater(pawn, drug), 0f, HintStatFormat.Nutrition);
+            }
+
+            float joy = def.ingestible?.joy ?? 0f;
+            if (joy > 0f)
+            {
+                AddHintStat("PS_HintJoy".Translate(), joy, 0f, HintStatFormat.Number);
+            }
+
+            var drugProps = DrugStatsUtility.GetDrugComp(def);
+            if (drugProps != null && drugProps.Addictive)
+            {
+                float tolerance = 0f;
+                var toleranceDef = DrugStatsUtility.GetTolerance(def);
+                if (toleranceDef != null)
+                {
+                    tolerance = pawn.health?.hediffSet?.GetFirstHediffOfDef(toleranceDef)?.Severity ?? 0f;
+                }
+
+                AddHintStat("PS_HintAddictiveness".Translate(), DrugStatsUtility.GetAddictivenessAtTolerance(def, tolerance), 0f, HintStatFormat.Percent);
+            }
+        }
+
         private void BuildHarvestHintStats(Plant plant)
         {
             equipHintTitle = null;
@@ -90,9 +125,24 @@ namespace PerspectiveShift
                 : (plant.def.plant.harvestTag == "Standard" && !pawn.WorkTypeIsDisabled(WorkTypeDefOf.PlantCutting));
         }
 
+        private static string InstanceLabel(Thing thing)
+        {
+            string label = thing.LabelNoParenthesis;
+            if (thing is ThingWithComps withComps)
+            {
+                var comps = withComps.AllComps;
+                for (int i = 0; i < comps.Count; i++)
+                {
+                    label = comps[i].TransformLabel(label);
+                }
+            }
+
+            return label.CapitalizeFirst(thing.def);
+        }
+
         private void SetHintIdentity(Thing gear)
         {
-            equipHintTitle = gear.LabelNoParenthesisCap;
+            equipHintTitle = InstanceLabel(gear);
             if (gear.TryGetQuality(out QualityCategory quality))
             {
                 equipHintQuality = quality.GetLabel().CapitalizeFirst();
