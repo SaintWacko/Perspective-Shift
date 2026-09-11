@@ -59,7 +59,10 @@ namespace PerspectiveShift
                 return;
             }
 
-            if (__state.def == JobDefOf.Ingest)
+            if (__state.def == JobDefOf.Ingest
+                || __state.def == JobDefOf.Meditate
+                || __state.def == JobDefOf.MeditatePray
+                || __state.def == JobDefOf.Reign)
             {
                 return;
             }
