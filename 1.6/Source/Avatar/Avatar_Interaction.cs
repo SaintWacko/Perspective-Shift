@@ -69,6 +69,12 @@ namespace PerspectiveShift
 
             if (withinGrabRange && TryHandlePickup(clickCell)) return true;
 
+            if (things.Any(thing => (withinGrabRange || IsWithinInteractionRange(thing)) && IsMeditationOrReignTarget(thing))
+                && TryHandleFloatMenu(clickCell))
+            {
+                return true;
+            }
+
             foreach (var thing in things)
             {
                 if (!withinGrabRange && !IsWithinInteractionRange(thing)) continue;
@@ -877,7 +883,7 @@ namespace PerspectiveShift
 
         private bool TryStartMeditationOrReignJob(Thing thing, JobDef forcedJob = null)
         {
-            if (thing.def == ThingDefOf.MeditationSpot || thing is Building_Throne throne1 && throne1.AssignedPawn == pawn)
+            if (IsMeditationOrReignTarget(thing))
             {
                 Job job;
                 if (thing is Building_Throne throne2)
@@ -899,6 +905,12 @@ namespace PerspectiveShift
             }
 
             return false;
+        }
+
+        private bool IsMeditationOrReignTarget(Thing thing)
+        {
+            return thing.def == ThingDefOf.MeditationSpot
+                || thing is Building_Throne throne && throne.AssignedPawn == pawn;
         }
 
         private bool TryStartWorkGiverJob(Thing target, JobDef forcedJob = null)
