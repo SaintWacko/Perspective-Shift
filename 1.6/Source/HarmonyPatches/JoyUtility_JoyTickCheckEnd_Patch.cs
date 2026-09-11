@@ -40,6 +40,11 @@ namespace PerspectiveShift
 
             if (pawn.needs.joy == null)
             {
+                if (curJob.doUntilGatheringEnded)
+                {
+                    return true;
+                }
+
                 if (!curJob.doUntilGatheringEnded)
                 {
                     pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
