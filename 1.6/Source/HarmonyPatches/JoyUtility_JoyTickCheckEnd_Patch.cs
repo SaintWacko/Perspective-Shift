@@ -40,7 +40,12 @@ namespace PerspectiveShift
 
             if (pawn.needs.joy == null)
             {
-                return true;
+                if (!curJob.doUntilGatheringEnded)
+                {
+                    pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
+                    __result = false;
+                    return false;
+                }
             }
 
             pawn.needs.joy?.GainJoy(extraJoyGainFactor * curJob.def.joyGainRate * 0.36f / 2500f * delta, curJob.def.joyKind);
