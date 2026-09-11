@@ -17,9 +17,14 @@ namespace PerspectiveShift
             AuthenticOptions
         }
 
+        private const float RecommendedReserve = 26f;
+        private const float RecommendedFlashDuration = 1.2f;
+        private const float RecommendedInlineGap = 8f;
+
         private PageStep step = PageStep.Role;
         private bool roleIsCharacter = false;
         private PlaystyleMode selectedPlaystyle = PlaystyleMode.Authentic;
+        private float stepShownAt;
 
         private static Texture2D _directorIcon;
         private static Texture2D DirectorIcon =>
@@ -47,6 +52,12 @@ namespace PerspectiveShift
                 ? "PS_SelectPlaystyle".Translate()
                 : "PS_ModeAuthentic".Translate();
 
+        public override void PreOpen()
+        {
+            base.PreOpen();
+            stepShownAt = Time.realtimeSinceStartup;
+        }
+
         public override void DoWindowContents(Rect rect)
         {
             Text.Font = GameFont.Medium;
@@ -69,7 +80,7 @@ namespace PerspectiveShift
             DoBottomButtons(rect, nextLabel, null, null, true, true);
         }
 
-        private void DrawRoleOption(Rect rect, string label, string desc, Texture2D icon, bool selected, Action onSelect)
+        private void DrawRoleOption(Rect rect, string label, string desc, Texture2D icon, bool selected, bool recommended, Action onSelect)
         {
             Widgets.DrawMenuSection(rect);
 
@@ -89,6 +100,8 @@ namespace PerspectiveShift
             var iconRect = new Rect(rect.x, rect.y, rect.width, rect.width).ExpandedBy(21);
             GUI.DrawTexture(iconRect, icon, ScaleMode.ScaleToFit);
 
+            if (recommended) DrawRecommendedLabel(new Rect(contentRect.x, contentRect.y, contentRect.width, RecommendedReserve), TextAnchor.UpperCenter);
+
             Text.Font = GameFont.Medium;
             Text.Anchor = TextAnchor.MiddleCenter;
             var labelHeight = Text.CalcHeight(label, contentRect.width);
@@ -100,6 +113,24 @@ namespace PerspectiveShift
             var descRect = new Rect(contentRect.x, labelRect.yMax + 5f, contentRect.width, descHeight);
             Widgets.Label(descRect, desc);
             Text.Anchor = TextAnchor.UpperLeft;
+        }
+
+        private void DrawRecommendedLabel(Rect rect, TextAnchor anchor)
+        {
+            var grey = ColoredText.SubtleGrayColor;
+            Text.Font = GameFont.Small;
+            Text.Anchor = anchor;
+            GUI.color = Color.Lerp(grey, Color.white, RecommendedFlashIntensity());
+            Widgets.Label(rect, "PS_Recommended".Translate());
+            GUI.color = Color.white;
+            Text.Anchor = TextAnchor.UpperLeft;
+        }
+
+        private float RecommendedFlashIntensity()
+        {
+            var t = (Time.realtimeSinceStartup - stepShownAt) / RecommendedFlashDuration;
+            if (t <= 0f || t >= 1f) return 0f;
+            return 0.5f - (0.5f * Mathf.Cos(t * 2f * Mathf.PI));
         }
 
         private void DrawRoleSelection(Rect rect)
@@ -122,6 +153,7 @@ namespace PerspectiveShift
                 "PS_RoleDirectorDesc".Translate(),
                 DirectorIcon,
                 !roleIsCharacter,
+                false,
                 () => roleIsCharacter = false);
 
             DrawRoleOption(rightRect,
@@ -129,10 +161,11 @@ namespace PerspectiveShift
                 "PS_RoleCharacterDesc".Translate(),
                 CharacterIcon,
                 roleIsCharacter,
+                ModCompatibility.ThemingModAvailable,
                 () => roleIsCharacter = true);
         }
 
-        private void DrawPlaystyleOption(Rect rect, PlaystyleMode mode, string label, string desc, Texture2D icon)
+        private void DrawPlaystyleOption(Rect rect, PlaystyleMode mode, string label, string desc, Texture2D icon, bool recommended)
         {
             bool selected = selectedPlaystyle == mode;
 
@@ -166,6 +199,13 @@ namespace PerspectiveShift
             var titleRect = new Rect(textRect.x, textRect.y, textRect.width, 50f);
             GUI.Label(titleRect, label, titleStyle);
 
+            if (recommended)
+            {
+                var titleSize = titleStyle.CalcSize(new GUIContent(label));
+                float badgeX = titleRect.x + titleSize.x + RecommendedInlineGap;
+                DrawRecommendedLabel(new Rect(badgeX, titleRect.y, titleRect.xMax - badgeX, titleSize.y), TextAnchor.MiddleLeft);
+            }
+
             Text.Font = GameFont.Small;
             var descRect = new Rect(textRect.x, titleRect.yMax + 5f, textRect.width, textRect.height - 55f);
             Widgets.Label(descRect, desc);
@@ -188,15 +228,18 @@ namespace PerspectiveShift
 
             DrawPlaystyleOption(r1, PlaystyleMode.Authentic,
                 "PS_ModeAuthentic".Translate(),
-                "PS_ModeAuthenticDesc".Translate(), AuthenticIcon);
+                "PS_ModeAuthenticDesc".Translate(), AuthenticIcon,
+                ModCompatibility.ThemingModAvailable);
 
             DrawPlaystyleOption(r2, PlaystyleMode.Swap,
                 "PS_ModeSwap".Translate(),
-                "PS_ModeSwapDesc".Translate(), SwapIcon);
+                "PS_ModeSwapDesc".Translate(), SwapIcon,
+                false);
 
             DrawPlaystyleOption(r3, PlaystyleMode.Dynamic,
                 "PS_ModeDynamic".Translate(),
-                "PS_ModeDynamicDesc".Translate(), DynamicIcon);
+                "PS_ModeDynamicDesc".Translate(), DynamicIcon,
+                false);
         }
 
         private void DrawAuthenticOption(Rect rect, string title, string desc, ref bool value)
@@ -245,17 +288,22 @@ namespace PerspectiveShift
                 ref State.allowDirectorInAuthentic);
         }
 
+        private void ShowStep(PageStep next)
+        {
+            step = next;
+            stepShownAt = Time.realtimeSinceStartup;
+            SoundDefOf.Click.PlayOneShotOnCamera();
+        }
+
         public override void DoBack()
         {
             if (step == PageStep.AuthenticOptions)
             {
-                step = PageStep.Playstyle;
-                SoundDefOf.Click.PlayOneShotOnCamera();
+                ShowStep(PageStep.Playstyle);
             }
             else if (step == PageStep.Playstyle)
             {
-                step = PageStep.Role;
-                SoundDefOf.Click.PlayOneShotOnCamera();
+                ShowStep(PageStep.Role);
             }
             else
             {
@@ -275,16 +323,14 @@ namespace PerspectiveShift
                 }
                 else
                 {
-                    step = PageStep.Playstyle;
-                    SoundDefOf.Click.PlayOneShotOnCamera();
+                    ShowStep(PageStep.Playstyle);
                 }
             }
             else if (step == PageStep.Playstyle)
             {
                 if (selectedPlaystyle == PlaystyleMode.Authentic)
                 {
-                    step = PageStep.AuthenticOptions;
-                    SoundDefOf.Click.PlayOneShotOnCamera();
+                    ShowStep(PageStep.AuthenticOptions);
                 }
                 else
                 {

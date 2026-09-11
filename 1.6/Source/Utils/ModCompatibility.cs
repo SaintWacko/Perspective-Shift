@@ -23,7 +23,11 @@ namespace PerspectiveShift
         public static readonly bool AchtungAvailable;
         public static readonly bool ProcessorFrameworkAvailable;
         public static readonly bool RimbodyAvailable;
+        public static readonly bool RimbodyChunkWorkoutsAvailable;
+        public static readonly bool AsAboveSoBelowAvailable;
+        public static readonly bool ProgressionAmmunitionAvailable;
         public static readonly bool DubsBadHygieneAvailable;
+        public static readonly bool ThemingModAvailable;
 
         private static Type vehiclePawnType;
         private static MethodInfo addOrTransferMethod;
@@ -74,7 +78,34 @@ namespace PerspectiveShift
         private static Type processFilterType;
         private static FieldInfo allowedIngredientsField;
 
+        private static Type ammoRechargerType;
+        private static Type ammoCompType;
+        private static PropertyInfo rechargerAmmoTypeProperty;
+        private static MethodInfo canRechargeMethod;
+
+        private static Type abStairsType;
+        private static PropertyInfo abCounterpartsProperty;
+
         private static Type rimbodyDBType;
+        private static MethodInfo compPhysiqueMethod;
+        private static PropertyInfo hasPhysiqueProperty;
+        private static FieldInfo gainField;
+        private static PropertyInfo gainMaxProperty;
+
+        public class RimbodyChunkWorkout
+        {
+            public JobDef job;
+            public string labelKey;
+        }
+
+        public static readonly List<RimbodyChunkWorkout> RimbodyChunkWorkouts = new List<RimbodyChunkWorkout>();
+
+        private static readonly string[][] ChunkWorkoutDefs =
+        {
+            new[] { "Rimbody_DoChunkLifting", "PS_ChunkWorkoutLift" },
+            new[] { "Rimbody_DoChunkOverheadPress", "PS_ChunkWorkoutPress" },
+            new[] { "Rimbody_DoChunkSquats", "PS_ChunkWorkoutSquat" },
+        };
         private static FieldInfo strengthTargetsField;
         private static FieldInfo cardioTargetsField;
         private static FieldInfo balanceTargetsField;
@@ -133,9 +164,21 @@ namespace PerspectiveShift
             if (RimbodyAvailable && !InitRimbodyCompat())
                 RimbodyAvailable = false;
 
+            RimbodyChunkWorkoutsAvailable = ModsConfig.IsActive("Maux36.Rimbody") && InitRimbodyChunkCompat();
+
+            AsAboveSoBelowAvailable = ModsConfig.IsActive("astryl.AsAboveSoBelow2");
+            if (AsAboveSoBelowAvailable && !InitAsAboveSoBelowCompat())
+                AsAboveSoBelowAvailable = false;
+
+            ProgressionAmmunitionAvailable = ModsConfig.IsActive("ferny.ProgressionAmmunition");
+            if (ProgressionAmmunitionAvailable && !InitProgressionAmmunitionCompat())
+                ProgressionAmmunitionAvailable = false;
+
             DubsBadHygieneAvailable = ModsConfig.IsActive("Dubwise.DubsBadHygiene") || ModsConfig.IsActive("Dubwise.DubsBadHygiene.Lite");
             if (DubsBadHygieneAvailable && !InitDBHCompat())
                 DubsBadHygieneAvailable = false;
+
+            ThemingModAvailable = ModsConfig.IsActive("ferny.themingformodpack");
         }
 
         public static void ClearCaches()
@@ -294,6 +337,106 @@ namespace PerspectiveShift
             if (!Require(ref doTryGiveJobCardioMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoCardioBuilding"), "DoTryGiveJob"), "DoTryGiveJob method", "Rimbody")) return false;
             if (!Require(ref doTryGiveJobBalanceMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoBalanceBuilding"), "DoTryGiveTargetJob"), "DoTryGiveTargetJob method", "Rimbody")) return false;
             return true;
+        }
+
+        private static bool InitProgressionAmmunitionCompat()
+        {
+            if (!Require(ref ammoRechargerType, () => AccessTools.TypeByName("ProgressionAmmunition.Building_AmmoRecharger"), "Building_AmmoRecharger type", "ProgressionAmmunition")) return false;
+            if (!Require(ref ammoCompType, () => AccessTools.TypeByName("ProgressionAmmunition.CompAmmo"), "CompAmmo type", "ProgressionAmmunition")) return false;
+            if (!Require(ref rechargerAmmoTypeProperty, () => AccessTools.Property(ammoRechargerType, "RechargerAmmoType"), "RechargerAmmoType property", "ProgressionAmmunition")) return false;
+            if (!Require(ref canRechargeMethod, () => AccessTools.Method(ammoRechargerType, "CanRecharge"), "CanRecharge method", "ProgressionAmmunition")) return false;
+            return true;
+        }
+
+        public static bool TryGetAmmoRechargerType(Thing thing, Pawn pawn, out string ammoType)
+        {
+            ammoType = null;
+            if (!ProgressionAmmunitionAvailable || thing == null || pawn == null) return false;
+            if (!ammoRechargerType.IsInstanceOfType(thing)) return false;
+
+            var weapon = pawn.equipment?.Primary;
+            if (weapon == null) return false;
+
+            object ammoComp = null;
+            var comps = weapon.AllComps;
+            for (int i = 0; i < comps.Count; i++)
+            {
+                if (!ammoCompType.IsInstanceOfType(comps[i])) continue;
+                ammoComp = comps[i];
+                break;
+            }
+
+            if (ammoComp == null) return false;
+            if (!(bool)canRechargeMethod.Invoke(thing, new object[] { ammoComp })) return false;
+
+            ammoType = rechargerAmmoTypeProperty.GetValue(thing, null)?.ToString();
+            return !ammoType.NullOrEmpty();
+        }
+
+        private static bool InitAsAboveSoBelowCompat()
+        {
+            if (!Require(ref abStairsType, () => AccessTools.TypeByName("AsAboveSoBelow.Building_ABStairs2"), "Building_ABStairs2 type", "AsAboveSoBelow")) return false;
+            if (!Require(ref abCounterpartsProperty, () => AccessTools.Property(abStairsType, "Counterparts"), "Counterparts property", "AsAboveSoBelow")) return false;
+            return true;
+        }
+
+        public static bool IsLevelLink(Thing thing)
+        {
+            if (!AsAboveSoBelowAvailable || thing == null) return false;
+            if (!abStairsType.IsInstanceOfType(thing)) return false;
+
+            return abCounterpartsProperty.GetValue(thing, null) is ICollection counterparts && counterparts.Count > 0;
+        }
+
+        private static bool InitRimbodyChunkCompat()
+        {
+            var compType = AccessTools.TypeByName("Maux36.Rimbody.CompPhysique");
+            if (compType == null) return false;
+            if (!Require(ref compPhysiqueMethod, () => AccessTools.Method("Maux36.Rimbody.PawnExtensions:compPhysique"), "compPhysique method", "Rimbody")) return false;
+            if (!Require(ref hasPhysiqueProperty, () => AccessTools.Property(compType, "HasPhysique"), "HasPhysique property", "Rimbody")) return false;
+            if (!Require(ref gainField, () => AccessTools.Field(compType, "gain"), "gain field", "Rimbody")) return false;
+            if (!Require(ref gainMaxProperty, () => AccessTools.Property(compType, "gainMax"), "gainMax property", "Rimbody")) return false;
+
+            foreach (var entry in ChunkWorkoutDefs)
+            {
+                var job = DefDatabase<JobDef>.GetNamedSilentFail(entry[0]);
+                if (job != null)
+                    RimbodyChunkWorkouts.Add(new RimbodyChunkWorkout { job = job, labelKey = entry[1] });
+            }
+
+            return RimbodyChunkWorkouts.Count > 0;
+        }
+
+        private static object RimbodyPhysique(Pawn pawn)
+        {
+            if (!RimbodyChunkWorkoutsAvailable || pawn == null) return null;
+            var comp = compPhysiqueMethod.Invoke(null, new object[] { pawn });
+            if (comp == null) return null;
+            return (bool)hasPhysiqueProperty.GetValue(comp, null) ? comp : null;
+        }
+
+        public static bool RimbodyTracksPhysique(Pawn pawn) => RimbodyPhysique(pawn) != null;
+
+        public static bool RimbodyWorkoutBlocked(Pawn pawn, out string reason)
+        {
+            reason = null;
+            var comp = RimbodyPhysique(pawn);
+            if (comp == null) return true;
+
+            var rest = pawn.needs?.rest;
+            if (rest != null && rest.CurLevel < 0.17f)
+            {
+                reason = "PS_ChunkWorkoutTooTired".Translate();
+                return true;
+            }
+
+            if ((float)gainField.GetValue(comp) >= (float)gainMaxProperty.GetValue(comp, null))
+            {
+                reason = "PS_ChunkWorkoutExhausted".Translate();
+                return true;
+            }
+
+            return false;
         }
 
         private static bool InitDBHCompat()

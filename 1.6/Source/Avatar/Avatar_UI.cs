@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using Verse;
 using Verse.AI;
+using Verse.Sound;
 
 namespace PerspectiveShift
 {
@@ -16,6 +17,71 @@ namespace PerspectiveShift
         private List<Gizmo> _cachedGizmos = [];
         private Thing _lastGizmoSource;
         private int _lastGizmoCacheFrame = -999;
+        private Rect needsBounds;
+        private Rect rotateButtonRect;
+        private Rect scaleGripRect;
+        private bool resizingUI;
+        private Vector2 resizeStartMouse;
+        private float resizeStartScale;
+        private Thing equipHintThing;
+        private string equipHintLabel;
+        private Texture2D equipHintIcon;
+        private IntVec3 equipHintCell = IntVec3.Invalid;
+        private IntVec3 equipHintPawnCell = IntVec3.Invalid;
+        private string equipHintTitle;
+        private string equipHintQuality;
+        private readonly HintStat[] equipHintStats = new HintStat[4];
+        private int equipHintStatCount;
+        private Vector2 equipHintLabelSize;
+        private Vector2 equipHintTitleSize;
+        private Vector2 equipHintQualitySize;
+        private const float HintScale = 0.858f;
+        private const int HintStatMaxCols = 2;
+        private const float HintStatColGap = 14f;
+        private readonly float[] equipHintColLabelW = new float[HintStatMaxCols];
+        private readonly float[] equipHintColValueW = new float[HintStatMaxCols];
+        private readonly float[] equipHintColDeltaW = new float[HintStatMaxCols];
+        private int equipHintStatCols;
+        private int equipHintStatRows;
+        private float equipHintStatRowH;
+
+        private const float MinAvatarUIScale = 0.5f;
+        private const float MaxAvatarUIScale = 1.5f;
+
+        private static readonly Color NeedsPanelColor = new ColorInt(32, 32, 32).ToColor.WithAlpha(0.7f);
+        private static readonly Color EquipHintColor = new ColorInt(14, 14, 14).ToColor.WithAlpha(0.45f);
+        private static readonly Color EquipHintLineColor = new Color(1f, 1f, 1f, 0.35f);
+        private static readonly Color HintTitleColor = new Color(0.94f, 0.94f, 0.92f);
+        private static readonly Color HintBetterColor = new Color(0.56f, 0.80f, 0.56f);
+        private static readonly Color HintWorseColor = new Color(0.85f, 0.53f, 0.53f);
+        private static readonly Color HintDividerColor = new Color(1f, 1f, 1f, 0.13f);
+        private const float HintArrowSize = 8f;
+        private static readonly Color GripIdleColor = new Color(1f, 1f, 1f, 0.45f);
+
+        private static Texture2D _wearIcon;
+        private static Texture2D WearIcon => _wearIcon ??= ContentFinder<Texture2D>.Get("Storage/Wear");
+
+        private static Texture2D _equipIcon;
+        private static Texture2D EquipIcon => _equipIcon ??= ContentFinder<Texture2D>.Get("Storage/Equip");
+
+        private static Texture2D _harvestIcon;
+        private static Texture2D HarvestIcon => _harvestIcon ??= ContentFinder<Texture2D>.Get("Storage/Hold");
+
+        private static Texture2D _eatIcon;
+        private static Texture2D EatIcon => _eatIcon ??= ContentFinder<Texture2D>.Get("Storage/Eat");
+
+        private static Texture2D _ingestIcon;
+        private static Texture2D IngestIcon => _ingestIcon ??= ContentFinder<Texture2D>.Get("Storage/IngestIcon");
+
+        private static Texture2D _arrowUpIcon;
+        private static Texture2D ArrowUpIcon => _arrowUpIcon ??= ContentFinder<Texture2D>.Get("UI/Buttons/ReorderUp");
+
+        private static Texture2D _arrowDownIcon;
+        private static Texture2D ArrowDownIcon => _arrowDownIcon ??= ContentFinder<Texture2D>.Get("UI/Buttons/ReorderDown");
+
+        private static Texture2D _rotateIcon;
+        private static Texture2D RotateIcon => _rotateIcon ??= ContentFinder<Texture2D>.Get("UI/Widgets/RotRight");
+        private static float AvatarUIScale => PerspectiveShiftMod.settings.avatarUIScale;
 
         public void OnGUI()
         {
@@ -30,6 +96,8 @@ namespace PerspectiveShift
             }
             bool mouseOverGizmo = MapGizmoUtility.LastMouseOverGizmo != null || gizmoBounds.Contains(UI.MousePositionOnUIInverted);
             bool mouseOverUI = IsMouseOverUI() || IsMouseOverColonistBar();
+            DrawEquipHint(mouseOverUI || mouseOverGizmo);
+            DrawFishingAlert();
             HandleHoldToFire(mouseOverGizmo, mouseOverUI);
             UpdateCursorAndReticle(mouseOverGizmo, mouseOverUI);
         }
@@ -87,6 +155,8 @@ namespace PerspectiveShift
             {
                 DrawPlayerGizmos();
                 DrawNeeds();
+                DrawCornerRotateButton();
+                DrawScaleGrip();
             }
         }
 
@@ -273,6 +343,9 @@ namespace PerspectiveShift
             if (gizmoBounds.Contains(mousePos))
                 return true;
 
+            if (resizingUI || rotateButtonRect.Contains(mousePos) || scaleGripRect.Contains(mousePos))
+                return true;
+
             if (Find.WindowStack.GetWindowAt(mouseInverted) != null)
                 return true;
 
@@ -358,7 +431,8 @@ namespace PerspectiveShift
 
             var gizmos = _cachedGizmos.Where(g => g.Visible).ToList();
 
-            float scale = 0.85f * Prefs.UIScale;
+            float s = 0.85f * AvatarUIScale;
+            float scale = s * Prefs.UIScale;
             float actualSize = 75f;
             float spacing = 8f;
 
@@ -370,20 +444,20 @@ namespace PerspectiveShift
             switch (PerspectiveShiftMod.settings.gizmoCorner)
             {
                 case GizmoCorner.TopRight:
-                    startX = (UI.screenWidth - 10f) / 0.85f - actualSize;
-                    startY = 10f / 0.85f;
+                    startX = (UI.screenWidth - 10f) / s - actualSize;
+                    startY = 10f / s;
                     break;
                 case GizmoCorner.BottomRight:
-                    startX = (UI.screenWidth - 10f) / 0.85f - actualSize;
-                    startY = (UI.screenHeight - 10f - mainButtonHeight) / 0.85f - actualSize;
+                    startX = (UI.screenWidth - 10f) / s - actualSize;
+                    startY = (UI.screenHeight - 10f - mainButtonHeight) / s - actualSize;
                     break;
                 case GizmoCorner.BottomLeft:
-                    startX = 10f / 0.85f;
-                    startY = (UI.screenHeight - 10f - mainButtonHeight) / 0.85f - actualSize;
+                    startX = 10f / s;
+                    startY = (UI.screenHeight - 10f - mainButtonHeight) / s - actualSize;
                     break;
                 case GizmoCorner.TopLeft:
-                    startX = 10f / 0.85f;
-                    startY = 10f / 0.85f;
+                    startX = 10f / s;
+                    startY = 10f / s;
                     break;
             }
 
@@ -433,10 +507,10 @@ namespace PerspectiveShift
                     tempHotkey = command.hotKey;
                     if (suppressHotkeys) command.hotKey = null;
                 }
-                float screenX = drawX * 0.85f;
-                float screenY = y * 0.85f;
-                float screenW = gizmoWidth * 0.85f;
-                float screenH = actualSize * 0.85f;
+                float screenX = drawX * s;
+                float screenY = y * s;
+                float screenW = gizmoWidth * s;
+                float screenH = actualSize * s;
 
                 boundsMinX = Mathf.Min(boundsMinX, screenX);
                 boundsMaxX = Mathf.Max(boundsMaxX, screenX + screenW);
@@ -498,6 +572,9 @@ namespace PerspectiveShift
 
         private void DrawNeeds()
         {
+            if (Event.current.type == EventType.Layout) return;
+
+            needsBounds = Rect.zero;
             if (pawn.needs == null || gizmoBounds == Rect.zero) return;
 
             var needs = pawn.needs.AllNeeds
@@ -505,39 +582,493 @@ namespace PerspectiveShift
                 .ToList();
             if (!needs.Any()) return;
 
+            float uiScale = AvatarUIScale;
             float width = 200f;
             float height = 40f;
             float totalHeight = needs.Count * height;
+            float drawnWidth = width * uiScale;
+            float drawnHeight = totalHeight * uiScale;
 
-            var startX = Mathf.Min(gizmoBounds.xMax - width - 10f, UI.screenWidth - width - 10f);
+            var corner = PerspectiveShiftMod.settings.gizmoCorner;
+            var startX = Mathf.Min(gizmoBounds.xMax - drawnWidth - 10f, UI.screenWidth - drawnWidth - 10f);
             float startY = gizmoBounds.yMax + 35f;
 
-            if (PerspectiveShiftMod.settings.gizmoCorner == GizmoCorner.BottomRight)
+            if (corner == GizmoCorner.BottomRight)
             {
-                startY = gizmoBounds.yMin - totalHeight - 10f;
+                startY = gizmoBounds.yMin - drawnHeight - 10f;
             }
-            else if (PerspectiveShiftMod.settings.gizmoCorner == GizmoCorner.BottomLeft)
+            else if (corner == GizmoCorner.BottomLeft)
             {
                 startX = gizmoBounds.xMin + 10f;
-                startY = gizmoBounds.yMin - totalHeight - 10f;
+                startY = gizmoBounds.yMin - drawnHeight - 10f;
             }
-            else if (PerspectiveShiftMod.settings.gizmoCorner == GizmoCorner.TopLeft)
+            else if (corner == GizmoCorner.TopLeft)
             {
                 startX = gizmoBounds.xMin + 10f;
             }
 
-            var unifiedBg = new Rect(startX - 20f, startY - 5f, width + 30f, totalHeight + 10f);
-            Widgets.DrawBoxSolid(unifiedBg, new ColorInt(32, 32, 32).ToColor.WithAlpha(0.7f));
+            var unifiedBg = new Rect(startX - 20f * uiScale, startY - 5f * uiScale, drawnWidth + 30f * uiScale, drawnHeight + 10f * uiScale);
+            Widgets.DrawBoxSolid(unifiedBg, NeedsPanelColor);
+            needsBounds = unifiedBg;
+
+            bool scaled = !Mathf.Approximately(uiScale, 1f);
+            Matrix4x4 prevMatrix = GUI.matrix;
+            if (scaled)
+            {
+                GUI.matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(uiScale * Prefs.UIScale, uiScale * Prefs.UIScale, 1f));
+            }
 
             DrawingAvatarNeeds = true;
-            float currentY = startY;
+            float localX = scaled ? startX / uiScale : startX;
+            float currentY = scaled ? startY / uiScale : startY;
             foreach (var need in needs)
             {
-                Rect needRect = new Rect(startX, currentY, width, height);
+                Rect needRect = new Rect(localX, currentY, width, height);
                 need.DrawOnGUI(needRect, maxThresholdMarkers: int.MaxValue, customMargin: 4f, drawArrows: true, doTooltip: true, rectForTooltip: null, drawLabel: true);
                 currentY += height;
             }
             DrawingAvatarNeeds = false;
+
+            if (scaled) GUI.matrix = prevMatrix;
+        }
+
+        private static readonly Color FishingAlertColor = new Color(1f, 0.86f, 0.35f);
+
+        private void DrawFishingAlert()
+        {
+            if (Event.current.type != EventType.Repaint) return;
+            if (pawn.Map == null || !pawn.Spawned) return;
+            if (pawn.jobs?.curDriver is not JobDriver_PSFishMinigame fishing) return;
+
+            string text = fishing.AlertText;
+            if (text.NullOrEmpty()) return;
+
+            var anchor = (pawn.DrawPos + new Vector3(0f, 0f, 0.95f)).MapToUIPosition();
+
+            var prevFont = Text.Font;
+            var prevAnchor = Text.Anchor;
+            bool prevWrap = Text.WordWrap;
+            Text.Font = GameFont.Medium;
+            Text.Anchor = TextAnchor.MiddleCenter;
+            Text.WordWrap = false;
+
+            var size = Text.CalcSize(text);
+            var rect = new Rect(anchor.x - size.x / 2f - 4f, anchor.y - size.y, size.x + 8f, size.y);
+
+            GUI.color = new Color(0f, 0f, 0f, 0.75f);
+            Widgets.Label(new Rect(rect.x + 1.5f, rect.y + 1.5f, rect.width, rect.height), text);
+            GUI.color = FishingAlertColor;
+            Widgets.Label(rect, text);
+            GUI.color = Color.white;
+
+            Text.WordWrap = prevWrap;
+            Text.Anchor = prevAnchor;
+            Text.Font = prevFont;
+        }
+
+        private void DrawEquipHint(bool mouseOverUI)
+        {
+            if (Event.current.type != EventType.Repaint) return;
+
+            if (!ShowWeaponHints && !ShowApparelHints && !ShowEatHints && !PerspectiveShiftMod.settings.harvestTooltips) return;
+            if (mouseOverUI || CarriedThing != null || pawn.Map == null) return;
+
+            var cell = UI.MouseCell();
+            if (cell != equipHintCell || pawn.Position != equipHintPawnCell)
+            {
+                equipHintCell = cell;
+                equipHintPawnCell = pawn.Position;
+                equipHintThing = FindHintTargetAt(cell, out equipHintLabel, out equipHintIcon);
+                MeasureHintLayout();
+            }
+
+            var thing = equipHintThing;
+            if (thing == null || !thing.Spawned) return;
+            if (IsHandlingHintTarget(thing)) return;
+
+            const float pad = 10f;
+            bool detailed = equipHintTitle != null;
+            bool hasIcon = equipHintIcon != null;
+            float iconSize = Mathf.Min(equipHintLabelSize.y - 1f, 16f);
+            float iconAdvance = hasIcon ? iconSize + 5f : 0f;
+            float actionRowH = equipHintLabelSize.y + 2f;
+
+            float contentW = equipHintLabelSize.x + iconAdvance;
+            float boxHeight = actionRowH;
+
+            float titleRowH = 0f;
+            float statsBlockH = 0f;
+            if (detailed)
+            {
+                titleRowH = equipHintTitleSize.y + 2f;
+                float titleW = equipHintTitleSize.x + (equipHintQuality != null ? equipHintQualitySize.x + 6f : 0f);
+                float statsW = 0f;
+                for (int c = 0; c < equipHintStatCols; c++)
+                {
+                    if (c > 0) statsW += HintStatColGap;
+                    statsW += HintColWidth(c);
+                }
+                contentW = Mathf.Max(contentW, Mathf.Max(titleW, statsW));
+                statsBlockH = (equipHintStatRowH + 2f) * equipHintStatRows;
+                boxHeight = titleRowH + 4f + statsBlockH + 4f + actionRowH + 8f;
+            }
+
+            float boxWidth = contentW + pad * 2f;
+            var anchor = (thing.DrawPos + new Vector3(0f, 0f, 0.35f)).MapToUIPosition();
+            const float leaderLength = 10f;
+            var boxRect = new Rect(anchor.x - boxWidth / 2f, anchor.y - leaderLength - boxHeight, boxWidth, boxHeight);
+            boxRect.x = Mathf.Clamp(boxRect.x, 4f, Mathf.Max(4f, UI.screenWidth - boxWidth - 4f));
+            boxRect.y = Mathf.Max(boxRect.y, 4f);
+
+            Matrix4x4 prevMatrix = GUI.matrix;
+            var pivot = new Vector3(anchor.x, anchor.y, 0f);
+            GUI.matrix = prevMatrix
+                * Matrix4x4.TRS(pivot, Quaternion.identity, Vector3.one)
+                * Matrix4x4.Scale(new Vector3(HintScale, HintScale, 1f))
+                * Matrix4x4.TRS(-pivot, Quaternion.identity, Vector3.one);
+
+            Widgets.DrawBoxSolid(boxRect, EquipHintColor);
+            Widgets.DrawLine(new Vector2(anchor.x, boxRect.yMax), new Vector2(anchor.x, anchor.y), EquipHintLineColor, 1f);
+
+            float x = boxRect.x + pad;
+            float y = boxRect.y + (detailed ? 4f : 0f);
+            bool prevWrap = Text.WordWrap;
+            Text.WordWrap = false;
+            Text.Anchor = TextAnchor.MiddleLeft;
+
+            if (detailed)
+            {
+                Text.Font = GameFont.Small;
+                GUI.color = HintTitleColor;
+                Widgets.Label(new Rect(x, y, equipHintTitleSize.x, titleRowH), equipHintTitle);
+                if (equipHintQuality != null)
+                {
+                    Text.Font = GameFont.Tiny;
+                    GUI.color = ColoredText.SubtleGrayColor;
+                    Widgets.Label(new Rect(x + equipHintTitleSize.x + 6f, y, equipHintQualitySize.x, titleRowH), equipHintQuality);
+                }
+                GUI.color = Color.white;
+                y += titleRowH + 2f;
+
+                Widgets.DrawLineHorizontal(boxRect.x + pad, y, contentW, HintDividerColor);
+                y += 2f;
+
+                Text.Font = GameFont.Tiny;
+                float colX = x;
+                for (int c = 0; c < equipHintStatCols; c++)
+                {
+                    if (c > 0) colX += HintStatColGap;
+                    for (int i = c * equipHintStatRows; i < equipHintStatCount && i < (c + 1) * equipHintStatRows; i++)
+                    {
+                        float rowY = y + (i - c * equipHintStatRows) * (equipHintStatRowH + 2f);
+                        DrawHintStatRow(equipHintStats[i], colX, rowY, equipHintStatRowH, c);
+                    }
+                    colX += HintColWidth(c);
+                }
+                y += statsBlockH;
+                y += 4f;
+            }
+
+            Text.Font = GameFont.Tiny;
+            if (hasIcon)
+            {
+                GUI.DrawTexture(new Rect(x, y + (actionRowH - iconSize) / 2f, iconSize, iconSize), equipHintIcon);
+            }
+            GUI.color = ColoredText.SubtleGrayColor;
+            Widgets.Label(new Rect(x + iconAdvance, y, equipHintLabelSize.x, actionRowH), equipHintLabel);
+            GUI.color = Color.white;
+
+            Text.Anchor = TextAnchor.UpperLeft;
+            Text.Font = GameFont.Small;
+            Text.WordWrap = prevWrap;
+            GUI.matrix = prevMatrix;
+        }
+
+        private float HintColWidth(int col)
+        {
+            float w = equipHintColLabelW[col] + 6f + equipHintColValueW[col];
+            if (equipHintColDeltaW[col] > 0f) w += 8f + equipHintColDeltaW[col];
+            return w;
+        }
+
+        private void DrawHintStatRow(HintStat stat, float x, float y, float rowHeight, int col)
+        {
+            float labelW = equipHintColLabelW[col];
+            float valueW = equipHintColValueW[col];
+
+            GUI.color = ColoredText.SubtleGrayColor;
+            Widgets.Label(new Rect(x, y, labelW, rowHeight), stat.label);
+
+            GUI.color = Color.white;
+            Widgets.Label(new Rect(x + labelW + 6f, y, valueW, rowHeight), stat.value);
+
+            if (stat.sign != 0)
+            {
+                float deltaX = x + labelW + 6f + valueW + 8f;
+                GUI.color = stat.sign > 0 ? HintBetterColor : HintWorseColor;
+                GUI.DrawTexture(new Rect(deltaX, y + (rowHeight - HintArrowSize) / 2f, HintArrowSize, HintArrowSize),
+                    stat.sign > 0 ? ArrowUpIcon : ArrowDownIcon);
+                Widgets.Label(new Rect(deltaX + HintArrowSize + 3f, y, stat.deltaWidth, rowHeight), stat.delta);
+            }
+
+            GUI.color = Color.white;
+        }
+
+        private void MeasureHintLayout()
+        {
+            equipHintLabelSize = Vector2.zero;
+            equipHintTitleSize = Vector2.zero;
+            equipHintQualitySize = Vector2.zero;
+            for (int c = 0; c < HintStatMaxCols; c++)
+            {
+                equipHintColLabelW[c] = 0f;
+                equipHintColValueW[c] = 0f;
+                equipHintColDeltaW[c] = 0f;
+            }
+            equipHintStatRowH = 0f;
+            equipHintStatCols = equipHintStatCount > 2 ? 2 : 1;
+            equipHintStatRows = equipHintStatCols > 0 ? Mathf.CeilToInt(equipHintStatCount / (float)equipHintStatCols) : 0;
+            if (equipHintThing == null) return;
+
+            var prevFont = Text.Font;
+            bool prevWrap = Text.WordWrap;
+            Text.WordWrap = false;
+
+            if (equipHintTitle != null)
+            {
+                Text.Font = GameFont.Small;
+                equipHintTitleSize = MeasureHintText(equipHintTitle);
+            }
+
+            Text.Font = GameFont.Tiny;
+            equipHintLabelSize = MeasureHintText(equipHintLabel);
+            if (equipHintQuality != null) equipHintQualitySize = MeasureHintText(equipHintQuality);
+            for (int i = 0; i < equipHintStatCount; i++)
+            {
+                int col = i / equipHintStatRows;
+                var labelSize = MeasureHintText(equipHintStats[i].label);
+                var valueSize = MeasureHintText(equipHintStats[i].value);
+                equipHintColLabelW[col] = Mathf.Max(equipHintColLabelW[col], labelSize.x);
+                equipHintColValueW[col] = Mathf.Max(equipHintColValueW[col], valueSize.x);
+                equipHintStatRowH = Mathf.Max(equipHintStatRowH, Mathf.Max(labelSize.y, valueSize.y));
+                if (equipHintStats[i].sign != 0)
+                {
+                    equipHintStats[i].deltaWidth = MeasureHintText(equipHintStats[i].delta).x;
+                    equipHintColDeltaW[col] = Mathf.Max(equipHintColDeltaW[col], equipHintStats[i].deltaWidth + HintArrowSize + 3f);
+                }
+            }
+
+            Text.WordWrap = prevWrap;
+            Text.Font = prevFont;
+        }
+
+        private static Vector2 MeasureHintText(string text)
+        {
+            if (text.NullOrEmpty()) return Vector2.zero;
+            var size = Text.CalcSize(text);
+            size.x += 2f;
+            return size;
+        }
+
+        private Thing FindHintTargetAt(IntVec3 cell, out string label, out Texture2D icon)
+        {
+            label = null;
+            icon = null;
+            if (!cell.InBounds(pawn.Map)) return null;
+
+            bool weaponHints = ShowWeaponHints;
+            bool apparelHints = ShowApparelHints;
+            bool eatHints = ShowEatHints;
+            bool drugHints = ShowDrugHints;
+            var things = cell.GetThingList(pawn.Map);
+            for (int i = 0; i < things.Count; i++)
+            {
+                var thing = things[i];
+                if (thing.def.category != ThingCategory.Item) continue;
+                if (!IsTargetInRange(thing)) continue;
+
+                bool isApparel = thing is Apparel;
+                if ((isApparel ? apparelHints : weaponHints) && !thing.def.IsStuff && TryMakeWearOrEquipJob(pawn, thing, out _))
+                {
+                    label = (isApparel ? "PS_DoubleClickToWear" : "PS_DoubleClickToEquip").Translate();
+                    icon = isApparel ? WearIcon : EquipIcon;
+                    BuildGearHintStats(thing);
+                    return thing;
+                }
+
+                if (drugHints && TryMakeDrugIngestJob(pawn, thing, out _))
+                {
+                    label = "PS_DoubleClickToIngest".Translate();
+                    icon = IngestIcon;
+                    BuildDrugHintStats(thing);
+                    return thing;
+                }
+
+                if (eatHints && TryMakeIngestJob(pawn, thing, out _))
+                {
+                    label = "PS_DoubleClickToEat".Translate();
+                    icon = EatIcon;
+                    BuildFoodHintStats(thing);
+                    return thing;
+                }
+            }
+
+            if (PerspectiveShiftMod.settings.harvestTooltips
+                && pawn.Position.DistanceTo(cell) <= PerspectiveShiftMod.settings.grabRange)
+            {
+                var plant = cell.GetPlant(pawn.Map);
+                if (plant != null && CanHarvestNow(plant))
+                {
+                    label = (PerspectiveShiftMod.settings.requireHeldClickForJobs ? "PS_ClickAndHoldToHarvest" : "PS_ClickToHarvest").Translate();
+                    icon = HarvestIcon;
+                    BuildHarvestHintStats(plant);
+                    return plant;
+                }
+            }
+
+            equipHintTitle = null;
+            equipHintQuality = null;
+            equipHintStatCount = 0;
+            return null;
+        }
+
+        private bool IsHandlingHintTarget(Thing thing)
+        {
+            var job = pawn.CurJob;
+            if (job == null) return false;
+            if (job.def != JobDefOf.Wear && job.def != JobDefOf.Equip && job.def != JobDefOf.Ingest && job.def != JobDefOf.Harvest) return false;
+            return job.targetA.Thing == thing;
+        }
+
+        private static bool ShowWeaponHints
+        {
+            get
+            {
+                var settings = PerspectiveShiftMod.settings;
+                return settings.weaponTooltips && !settings.disableDoubleClickEquip;
+            }
+        }
+
+        private static bool ShowApparelHints
+        {
+            get
+            {
+                var settings = PerspectiveShiftMod.settings;
+                return settings.apparelTooltips && !settings.disableDoubleClickEquip;
+            }
+        }
+
+        private static bool ShowEatHints
+        {
+            get
+            {
+                var settings = PerspectiveShiftMod.settings;
+                return settings.eatTooltips && !settings.disableDoubleClickEat;
+            }
+        }
+
+        private static bool ShowDrugHints
+        {
+            get
+            {
+                var settings = PerspectiveShiftMod.settings;
+                return settings.drugTooltips && !settings.disableDoubleClickDrug;
+            }
+        }
+
+        private void DrawCornerRotateButton()
+        {
+            if (Event.current.type == EventType.Layout) return;
+
+            rotateButtonRect = Rect.zero;
+            if (needsBounds == Rect.zero) return;
+
+            float uiScale = AvatarUIScale;
+            rotateButtonRect = new Rect(needsBounds.xMin + uiScale, needsBounds.yMin + uiScale, 18f * uiScale, 18f * uiScale);
+
+            if (Widgets.ButtonImage(rotateButtonRect, RotateIcon))
+            {
+                var corner = PerspectiveShiftMod.settings.gizmoCorner;
+                PerspectiveShiftMod.settings.gizmoCorner = (GizmoCorner)(((int)corner + 1) % 4);
+                SoundDefOf.Click.PlayOneShotOnCamera();
+                LoadedModManager.GetMod<PerspectiveShiftMod>()?.WriteSettings();
+            }
+            else if (Mouse.IsOver(rotateButtonRect))
+            {
+                TooltipHandler.TipRegion(rotateButtonRect, "PS_RotateCornerTip".Translate());
+            }
+
+            GenUI.AbsorbClicksInRect(rotateButtonRect);
+        }
+
+        private void DrawScaleGrip()
+        {
+            if (Event.current.type == EventType.Layout) return;
+
+            scaleGripRect = Rect.zero;
+            if (needsBounds == Rect.zero) return;
+
+            var settings = PerspectiveShiftMod.settings;
+            var corner = settings.gizmoCorner;
+            bool gripRight = corner == GizmoCorner.TopLeft || corner == GizmoCorner.BottomLeft;
+
+            float gripSize = 18f;
+            scaleGripRect = new Rect(gripRight ? needsBounds.xMax - gripSize : needsBounds.xMin, needsBounds.yMax - gripSize, gripSize, gripSize);
+
+            bool hovered = Mouse.IsOver(scaleGripRect);
+            if (Event.current.type == EventType.Repaint)
+            {
+                DrawGripLines(scaleGripRect, gripRight, hovered || resizingUI ? Color.white : GripIdleColor);
+            }
+            var ev = Event.current;
+
+            if (ev.type == EventType.MouseDown && hovered)
+            {
+                if (ev.button == 0)
+                {
+                    resizingUI = true;
+                    resizeStartMouse = ev.mousePosition;
+                    resizeStartScale = settings.avatarUIScale;
+                    ev.Use();
+                }
+                else if (ev.button == 1)
+                {
+                    settings.avatarUIScale = 1f;
+                    SoundDefOf.Click.PlayOneShotOnCamera();
+                    LoadedModManager.GetMod<PerspectiveShiftMod>()?.WriteSettings();
+                    ev.Use();
+                }
+            }
+
+            if (!resizingUI)
+            {
+                if (hovered) TooltipHandler.TipRegion(scaleGripRect, "PS_ScaleInterfaceTip".Translate());
+                return;
+            }
+
+            if (ev.rawType == EventType.MouseUp)
+            {
+                resizingUI = false;
+                LoadedModManager.GetMod<PerspectiveShiftMod>()?.WriteSettings();
+                ev.Use();
+                return;
+            }
+
+            var delta = ev.mousePosition - resizeStartMouse;
+            settings.avatarUIScale = Mathf.Clamp(resizeStartScale + (delta.x * (gripRight ? 1f : -1f) + delta.y) / 600f, MinAvatarUIScale, MaxAvatarUIScale);
+            if (ev.type == EventType.MouseDrag) ev.Use();
+        }
+
+        private static void DrawGripLines(Rect rect, bool gripRight, Color color)
+        {
+            float cx = gripRight ? rect.xMax : rect.xMin;
+            float dx = gripRight ? -1f : 1f;
+
+            for (int i = 1; i <= 3; i++)
+            {
+                float d = i * 5f + 1f;
+                Widgets.DrawLine(new Vector2(cx + dx * d, rect.yMax), new Vector2(cx, rect.yMax - d), color, 1f);
+            }
         }
     }
 }

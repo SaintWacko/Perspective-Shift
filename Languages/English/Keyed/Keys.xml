@@ -15,6 +15,42 @@
     <PS_RoleDirectorDesc>Experience the game from an omniscient point of view, only managing the characters. The classic experience.</PS_RoleDirectorDesc>
     <PS_RoleCharacter>Play as characters</PS_RoleCharacter>
     <PS_RoleCharacterDesc>Experience the game from the point of view of one or many of your characters. Customizable.</PS_RoleCharacterDesc>
+    <PS_Recommended>RECOMMENDED</PS_Recommended>
+
+    <PS_InhabitedControls>List of controls while inhabited</PS_InhabitedControls>
+    <PS_NeverShowAgain>Never show this again</PS_NeverShowAgain>
+    <PS_ShowControlsOnFirstInhabit>Show controls on first ever inhabit</PS_ShowControlsOnFirstInhabit>
+    <PS_ShowControlsOnFirstInhabitDesc>The first time you take control of a character in a save, open a summary of the character controls. Turning this off hides it everywhere, including in saves that have not shown it yet.</PS_ShowControlsOnFirstInhabitDesc>
+    <PS_InhabitedControlsRebindWarning>If you have rebound your keys, these may no longer apply. This will only show once per save.</PS_InhabitedControlsRebindWarning>
+    <PS_ControlsMovement>Movement</PS_ControlsMovement>
+    <PS_ControlsInteracting>Interacting</PS_ControlsInteracting>
+    <PS_ControlsCharacter>Your character</PS_ControlsCharacter>
+    <PS_KeyWASD>WASD</PS_KeyWASD>
+    <PS_KeyShiftHold>Hold left shift</PS_KeyShiftHold>
+    <PS_KeyCtrlHold>Hold left ctrl</PS_KeyCtrlHold>
+    <PS_KeyLeftClick>Left click</PS_KeyLeftClick>
+    <PS_KeyLeftClickHold>Hold left click</PS_KeyLeftClickHold>
+    <PS_KeyRightClick>Right click</PS_KeyRightClick>
+    <PS_KeyRightClickHauling>Right click (while hauling)</PS_KeyRightClickHauling>
+    <PS_KeyDoubleClickHauling>Double click (while hauling)</PS_KeyDoubleClickHauling>
+    <PS_KeyE>E</PS_KeyE>
+    <PS_KeyQ>Q</PS_KeyQ>
+    <PS_KeyH>H</PS_KeyH>
+    <PS_KeyF>F</PS_KeyF>
+    <PS_KeyJ>J</PS_KeyJ>
+    <PS_ControlMove>Move</PS_ControlMove>
+    <PS_ControlSprint>Sprint</PS_ControlSprint>
+    <PS_ControlSneak>Sneak</PS_ControlSneak>
+    <PS_ControlLeftClick>Begin hauling an item, or otherwise operate it</PS_ControlLeftClick>
+    <PS_ControlLeftClickHold>Specific tasks like building, mining, or chopping</PS_ControlLeftClickHold>
+    <PS_ControlRightClick>Queue more advanced jobs on things</PS_ControlRightClick>
+    <PS_ControlStoreItem>Store the carried item in your inventory</PS_ControlStoreItem>
+    <PS_ControlEquipItem>Equip the carried item</PS_ControlEquipItem>
+    <PS_ControlInventory>Open your inventory</PS_ControlInventory>
+    <PS_ControlNeeds>Open your needs tab</PS_ControlNeeds>
+    <PS_ControlHealth>Open your health tab</PS_ControlHealth>
+    <PS_ControlEat>Have your character eat food</PS_ControlEat>
+    <PS_ControlRecreation>Do recreation</PS_ControlRecreation>
 
     <PS_SelectPlaystyle>Select your character playstyle</PS_SelectPlaystyle>
     <PS_ModeAuthentic>Authentic style</PS_ModeAuthentic>
@@ -33,6 +69,40 @@
 
     <PS_EnableDamageScreenEffect>Enable damage screen effect</PS_EnableDamageScreenEffect>
     <PS_EnableDamageScreenEffectDesc>Flashes a red overlay on the screen briefly when your controlled character takes damage.</PS_EnableDamageScreenEffectDesc>
+    <PS_SleepingPreventsVision>Sleeping prevents vision</PS_SleepingPreventsVision>
+    <PS_SleepingPreventsVisionDesc>While the character you are inhabiting is asleep or unconscious, the world fades to black until they wake up. Your interface stays visible.</PS_SleepingPreventsVisionDesc>
+    <PS_DisallowOtherMapsInAuthentic>Disallow seeing other maps in authentic style</PS_DisallowOtherMapsInAuthentic>
+    <PS_DisallowOtherMapsInAuthenticDesc>In authentic style you can only look at the map your character is on. Jumping to another colony, to a pawn elsewhere, or to a letter about another map is refused, including while your character is travelling in a caravan.</PS_DisallowOtherMapsInAuthenticDesc>
+    <PS_CannotViewOtherMaps>You can only see where your character is.</PS_CannotViewOtherMaps>
+    <PS_WeaponTooltips>Weapon tooltips</PS_WeaponTooltips>
+    <PS_WeaponTooltipsDesc>Hovering a weapon within reach shows its name, quality, and how its DPS and armor penetration compare with what you have equipped.</PS_WeaponTooltipsDesc>
+    <PS_ApparelTooltips>Apparel tooltips</PS_ApparelTooltips>
+    <PS_ApparelTooltipsDesc>Hovering apparel within reach shows its name, quality, and how its armor and insulation compare with whatever it would replace.</PS_ApparelTooltipsDesc>
+    <PS_HaulingCursor>Hauling cursor</PS_HaulingCursor>
+    <PS_HaulingCursorDesc>While you are carrying something, the cursor becomes a drop marker, replacing the aiming reticle even while drafted.</PS_HaulingCursorDesc>
+    <PS_EatTooltips>Food tooltips</PS_EatTooltips>
+    <PS_EatTooltipsDesc>Hovering food within reach shows a hint over it reminding you that double-clicking eats it.</PS_EatTooltipsDesc>
+    <PS_DrugTooltips>Drug tooltips</PS_DrugTooltips>
+    <PS_DrugTooltipsDesc>Show a tooltip with the drug's name and basic stats when standing over one.</PS_DrugTooltipsDesc>
+    <PS_DisableDoubleClickDrug>Disable double-click to ingest drugs</PS_DisableDoubleClickDrug>
+    <PS_DisableDoubleClickDrugDesc>Stop a double-click on a held drug from making the avatar ingest it.</PS_DisableDoubleClickDrugDesc>
+    <PS_HintDps>DPS</PS_HintDps>
+    <PS_HintArmorPenetration>AP</PS_HintArmorPenetration>
+    <PS_HintArmorSharp>Sharp</PS_HintArmorSharp>
+    <PS_HintArmorBlunt>Blunt</PS_HintArmorBlunt>
+    <PS_HintInsulationCold>Cold</PS_HintInsulationCold>
+    <PS_HintInsulationHeat>Heat</PS_HintInsulationHeat>
+    <PS_HintNutrition>Nutrition</PS_HintNutrition>
+    <PS_HintJoy>Joy</PS_HintJoy>
+    <PS_HintAddictiveness>Addiction</PS_HintAddictiveness>
+    <PS_ClickAndHoldToHarvest>Click and hold to harvest</PS_ClickAndHoldToHarvest>
+    <PS_ClickToHarvest>Click to harvest</PS_ClickToHarvest>
+    <PS_HarvestTooltips>Harvest tooltips</PS_HarvestTooltips>
+    <PS_HarvestTooltipsDesc>Hovering a harvestable plant within reach shows what it yields and that yield's nutrition.</PS_HarvestTooltipsDesc>
+    <PS_DoubleClickToEquip>Double-click to equip</PS_DoubleClickToEquip>
+    <PS_DoubleClickToWear>Double-click to wear</PS_DoubleClickToWear>
+    <PS_DoubleClickToEat>Double-click to eat</PS_DoubleClickToEat>
+    <PS_DoubleClickToIngest>Double-click to ingest</PS_DoubleClickToIngest>
     <PS_WashYourself>Wash yourself</PS_WashYourself>
     <PS_DrinkWater>Drink water</PS_DrinkWater>
     <PS_RelieveBladder>Relieve bladder in water</PS_RelieveBladder>
@@ -45,6 +115,8 @@
     <PS_ShootAccuracyMultiplier>Shooting accuracy multiplier: {0}</PS_ShootAccuracyMultiplier>
     <PS_PlayerMoveSpeedCap>Player move speed cap: {0}</PS_PlayerMoveSpeedCap>
     <PS_GizmoCorner>Gizmo UI position</PS_GizmoCorner>
+    <PS_RotateCornerTip>Move the interface to the next corner.</PS_RotateCornerTip>
+    <PS_ScaleInterfaceTip>Drag to resize the needs and gizmos. Right-click to reset to normal size.</PS_ScaleInterfaceTip>
     <PS_TotalFreedom>Total freedom</PS_TotalFreedom>
     <PS_TotalFreedomDesc>Always allow character switching regardless of any settings.</PS_TotalFreedomDesc>
     <PS_AllowNonHuman>Allow non-human control</PS_AllowNonHuman>
@@ -135,6 +207,8 @@
     <PS_RequireHeldClickForJobsDesc>You must hold the left mouse button to continue jobs like mining or harvesting. Disable for accessibility.</PS_RequireHeldClickForJobsDesc>
     <PS_DisableDoubleClickEquip>Disable double-click to equip</PS_DisableDoubleClickEquip>
     <PS_DisableDoubleClickEquipDesc>Double-clicking a destination while carrying a weapon or apparel will no longer wear or equip it instead of dropping it.</PS_DisableDoubleClickEquipDesc>
+    <PS_DisableDoubleClickEat>Disable double-click to eat</PS_DisableDoubleClickEat>
+    <PS_DisableDoubleClickEatDesc>Double-clicking a destination while carrying food will no longer eat it instead of dropping it.</PS_DisableDoubleClickEatDesc>
     <PS_WorkSpeedMultiplier>Work speed multiplier: {0}</PS_WorkSpeedMultiplier>
     <PS_StatPart_AvatarWorkSpeed>Direct control work speed</PS_StatPart_AvatarWorkSpeed>
     <PS_FullyRested>You are fully rested.</PS_FullyRested>
@@ -150,4 +224,56 @@
     <PS_CannotSprintExhausted>You are too exhausted to sprint.</PS_CannotSprintExhausted>
     <PS_HoldingPlatformOccupied>This holding platform is already occupied.</PS_HoldingPlatformOccupied>
     <PS_CannotCaptureEntity>This entity cannot be captured to a holding platform.</PS_CannotCaptureEntity>
+    <PS_StartFishing>Start fishing</PS_StartFishing>
+    <PS_FishingNeedsResearch>requires {0}</PS_FishingNeedsResearch>
+    <PS_FishingIncapable>incapable of fishing</PS_FishingIncapable>
+    <PS_MineCursor>Mine cursor</PS_MineCursor>
+    <PS_MineCursorDesc>Swaps the cursor to a pickaxe when hovering over rock or a wall your character could mine.</PS_MineCursorDesc>
+    <PS_ChunkWorkoutLift>Lift {0}</PS_ChunkWorkoutLift>
+    <PS_ChunkWorkoutPress>Overhead press {0}</PS_ChunkWorkoutPress>
+    <PS_ChunkWorkoutSquat>Squat with {0}</PS_ChunkWorkoutSquat>
+    <PS_ChunkWorkoutTooTired>too tired</PS_ChunkWorkoutTooTired>
+    <PS_ChunkWorkoutExhausted>already worked out enough</PS_ChunkWorkoutExhausted>
+    <PS_ResetToDefault>Reset to default...</PS_ResetToDefault>
+    <PS_ResetThisTab>Reset {0} tab</PS_ResetThisTab>
+    <PS_ResetAll>Reset all settings</PS_ResetAll>
+    <PS_ResetAllConfirm>Reset every Perspective Shift setting back to its default value?</PS_ResetAllConfirm>
+    <PS_TabCamera>Camera</PS_TabCamera>
+    <PS_TabInteraction>Interaction</PS_TabInteraction>
+    <PS_TabCursors>Cursors</PS_TabCursors>
+    <PS_TabMovement>Movement</PS_TabMovement>
+    <PS_TabInterface>Interface</PS_TabInterface>
+    <PS_TabGameplay>Gameplay</PS_TabGameplay>
+    <PS_BuildCursor>Build cursor</PS_BuildCursor>
+    <PS_BuildCursorDesc>Swaps the cursor to a hammer when hovering over a construction frame that has all of its materials.</PS_BuildCursorDesc>
+    <PS_ChopCursor>Chop cursor</PS_ChopCursor>
+    <PS_ChopCursorDesc>Swaps the cursor to an axe when hovering over a tree your character could chop.</PS_ChopCursorDesc>
+    <PS_HarvestCursor>Harvest cursor</PS_HarvestCursor>
+    <PS_HarvestCursorDesc>Swaps the cursor to a sickle when hovering over a plant your character could harvest.</PS_HarvestCursorDesc>
+    <PS_CutCursor>Cut cursor</PS_CutCursor>
+    <PS_CutCursorDesc>Show a scythe cursor when holding left click would cut a plant marked for cutting.</PS_CutCursorDesc>
+    <PS_TraverseCursor>Traverse cursor</PS_TraverseCursor>
+    <PS_TraverseCursorDesc>Show a cursor when hovering stairs, ladders or an elevator the avatar can use to change level. Requires As above, So below II.</PS_TraverseCursorDesc>
+    <PS_ReloadCursors>Reload cursors</PS_ReloadCursors>
+    <PS_ReloadCursorsDesc>Show an arrow, ammo or charge cursor when hovering a resupply building that can reload the avatar's equipped weapon. Requires Progression: Ammunition.</PS_ReloadCursorsDesc>
+    <PS_OpenCursor>Open cursor</PS_OpenCursor>
+    <PS_OpenCursorDesc>Show a cursor when hovering something the avatar can open, such as a crate, a casket or a filled grave.</PS_OpenCursorDesc>
+    <PS_SleepCursor>Sleep cursor</PS_SleepCursor>
+    <PS_SleepCursorDesc>Swaps the cursor when hovering over a bed your character could sleep in. Hidden while you are already resting.</PS_SleepCursorDesc>
+    <PS_RecreationCursor>Recreation cursor</PS_RecreationCursor>
+    <PS_RecreationCursorDesc>Show a cursor when hovering a recreation building the avatar can use, like a chess or billiards table. Watched buildings such as a television show it while the avatar stands somewhere it can watch from.</PS_RecreationCursorDesc>
+    <PS_ResearchCursor>Research cursor</PS_ResearchCursor>
+    <PS_ResearchCursorDesc>Swaps the cursor when hovering over a research bench your character could work at. Hidden while you are already researching.</PS_ResearchCursorDesc>
+    <PS_RoofCursor>Roof cursor</PS_RoofCursor>
+    <PS_RoofCursorDesc>Swaps the cursor when hovering over a cell marked for roofing that your character could roof.</PS_RoofCursorDesc>
+    <PS_FishingMinigame>Fishing minigame</PS_FishingMinigame>
+    <PS_FishingMinigameDesc>Replaces fishing zones with a hands-on minigame. Right-click any fishable water as your character to cast a line, wait for a bite, then reel it in. While this is on, the inhabited pawn no longer can automatically fish.</PS_FishingMinigameDesc>
+    <PS_FishingMinigameTitle>Reel in</PS_FishingMinigameTitle>
+    <PS_FishingHit>HIT!</PS_FishingHit>
+    <PS_FishingLanded>Caught!</PS_FishingLanded>
+    <PS_FishingReelHint>Hold left click</PS_FishingReelHint>
+    <PS_FishingEscaped>It got away.</PS_FishingEscaped>
+    <PS_FishingEscapedMessage>The catch slipped off the line.</PS_FishingEscapedMessage>
+    <PS_FishingCaught>Caught {0}.</PS_FishingCaught>
+    <PS_FishingNothingBiting>Nothing is biting here.</PS_FishingNothingBiting>
 </LanguageData>

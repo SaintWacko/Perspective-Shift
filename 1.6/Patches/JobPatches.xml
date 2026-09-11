@@ -24,11 +24,14 @@
         </value>
     </Operation> -->
    
-    <Operation Class="PatchOperationAddModExtension">
+    <Operation Class="PatchOperationConditional">
         <xpath>/Defs/JobDef[defName="DisassembleMech"]</xpath>
-        <value>
-            <li Class="PerspectiveShift.DisableLeftClickExtension" />
-        </value>
+        <match Class="PatchOperationAddModExtension">
+            <xpath>/Defs/JobDef[defName="DisassembleMech"]</xpath>
+            <value>
+                <li Class="PerspectiveShift.DisableLeftClickExtension" />
+            </value>
+        </match>
     </Operation>
 
 
