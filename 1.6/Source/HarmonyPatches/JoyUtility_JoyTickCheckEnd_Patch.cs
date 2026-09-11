@@ -38,11 +38,9 @@ namespace PerspectiveShift
                 extraJoyGainFactor *= joySource.GetStatValue(StatDefOf.JoyGainFactor);
             }
 
-            if (pawn.needs.joy == null && !curJob.doUntilGatheringEnded)
+            if (pawn.needs.joy == null)
             {
-                pawn.jobs.curDriver.EndJobWith(JobCondition.InterruptForced);
-                __result = false;
-                return false;
+                return true;
             }
 
             pawn.needs.joy?.GainJoy(extraJoyGainFactor * curJob.def.joyGainRate * 0.36f / 2500f * delta, curJob.def.joyKind);
