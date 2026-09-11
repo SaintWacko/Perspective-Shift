@@ -37,8 +37,23 @@ namespace PerspectiveShift
         private static Texture2D _cutCursorTex;
         public static Texture2D CutCursorTex => _cutCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Scythe");
 
+        private static Texture2D _arrowsCursorTex;
+        public static Texture2D ArrowsCursorTex => _arrowsCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Arrows");
+
+        private static Texture2D _ammoCursorTex;
+        public static Texture2D AmmoCursorTex => _ammoCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Ammo");
+
+        private static Texture2D _chargeCursorTex;
+        public static Texture2D ChargeCursorTex => _chargeCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Charge");
+
         private static Texture2D _traverseCursorTex;
         public static Texture2D TraverseCursorTex => _traverseCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Traverse");
+
+        private static Texture2D _openCursorTex;
+        public static Texture2D OpenCursorTex => _openCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Open");
+
+        private static Texture2D _recreationCursorTex;
+        public static Texture2D RecreationCursorTex => _recreationCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Recreation");
 
         private static Texture2D _sleepCursorTex;
         public static Texture2D SleepCursorTex => _sleepCursorTex ??= ContentFinder<Texture2D>.Get("UI/CustomCursors/Sleep");
@@ -376,7 +391,12 @@ namespace PerspectiveShift
             Harvest,
             Cut,
             Traverse,
+            Open,
+            ReloadArrow,
+            ReloadAmmo,
+            ReloadCharge,
             Sleep,
+            Recreation,
             Research,
             Roof,
         }
@@ -390,7 +410,12 @@ namespace PerspectiveShift
                 case CursorJobHint.Harvest: return HarvestCursorTex;
                 case CursorJobHint.Cut: return CutCursorTex;
                 case CursorJobHint.Traverse: return TraverseCursorTex;
+                case CursorJobHint.Open: return OpenCursorTex;
+                case CursorJobHint.ReloadArrow: return ArrowsCursorTex;
+                case CursorJobHint.ReloadAmmo: return AmmoCursorTex;
+                case CursorJobHint.ReloadCharge: return ChargeCursorTex;
                 case CursorJobHint.Sleep: return SleepCursorTex;
+                case CursorJobHint.Recreation: return RecreationCursorTex;
                 case CursorJobHint.Research: return ResearchCursorTex;
                 case CursorJobHint.Roof: return RoofCursorTex;
                 default: return MineCursorTex;
@@ -438,11 +463,22 @@ namespace PerspectiveShift
         private CursorJobHint EvaluateJobTargetInt(IntVec3 cell, out Thing target)
         {
             target = null;
-            if (pawn.Position.DistanceTo(cell) > PerspectiveShiftMod.settings.grabRange) return CursorJobHint.None;
-
             var things = cell.GetThingList(pawn.Map);
-
             var settings = PerspectiveShiftMod.settings;
+
+            if (pawn.Position.DistanceTo(cell) > settings.grabRange)
+            {
+                if (!settings.recreationCursor) return CursorJobHint.None;
+
+                for (int i = 0; i < things.Count; i++)
+                {
+                    if (!IsWithinInteractionRange(things[i]) || !CanRecreateAt(things[i])) continue;
+
+                    target = things[i];
+                    return CursorJobHint.Recreation;
+                }
+                return CursorJobHint.None;
+            }
 
             if (settings.buildCursor && !pawn.WorkTypeIsDisabled(WorkTypeDefOf.Construction))
             {
@@ -485,6 +521,29 @@ namespace PerspectiveShift
                 }
             }
 
+            if (settings.reloadCursors && ModCompatibility.ProgressionAmmunitionAvailable)
+            {
+                for (int i = 0; i < things.Count; i++)
+                {
+                    if (!ModCompatibility.TryGetAmmoRechargerType(things[i], pawn, out string ammoType)) continue;
+                    if (!pawn.CanReserve(things[i], 1, -1, null, true)) continue;
+
+                    target = things[i];
+                    return ReloadCursorHint(ammoType);
+                }
+            }
+
+            if (settings.openCursor)
+            {
+                for (int i = 0; i < things.Count; i++)
+                {
+                    if (!CanOpenNow(things[i])) continue;
+
+                    target = things[i];
+                    return CursorJobHint.Open;
+                }
+            }
+
             if (settings.chopCursor || settings.harvestCursor || settings.cutCursor)
             {
                 var plant = cell.GetPlant(pawn.Map);
@@ -520,7 +579,7 @@ namespace PerspectiveShift
 
             if (settings.roofCursor && CanBuildRoofAt(cell)) return CursorJobHint.Roof;
 
-            if (!settings.researchCursor && !settings.sleepCursor) return CursorJobHint.None;
+            if (!settings.researchCursor && !settings.sleepCursor && !settings.recreationCursor) return CursorJobHint.None;
 
             for (int i = 0; i < things.Count; i++)
             {
@@ -534,9 +593,24 @@ namespace PerspectiveShift
                     target = things[i];
                     return CursorJobHint.Sleep;
                 }
+                if (CanRecreateAt(things[i]))
+                {
+                    target = things[i];
+                    return CursorJobHint.Recreation;
+                }
             }
 
             return CursorJobHint.None;
+        }
+
+        private static CursorJobHint ReloadCursorHint(string ammoType)
+        {
+            switch (ammoType)
+            {
+                case "Arrow": return CursorJobHint.ReloadArrow;
+                case "Charge": return CursorJobHint.ReloadCharge;
+                default: return CursorJobHint.ReloadAmmo;
+            }
         }
 
         private bool CanCutPlantNow(Plant plant)
@@ -547,6 +621,16 @@ namespace PerspectiveShift
             if (!PlantUtility.PawnWillingToCutPlant_Job(plant, pawn)) return false;
 
             return pawn.CanReserve(plant, 1, -1, null, true);
+        }
+
+        private bool CanOpenNow(Thing thing)
+        {
+            if (thing is not IOpenable { CanOpen: true }) return false;
+            if (thing.def.category == ThingCategory.Item) return false;
+            if (!pawn.health.capacities.CapableOf(PawnCapacityDefOf.Manipulation)) return false;
+            if (!pawn.CanReach(thing, PathEndMode.OnCell, Danger.Deadly)) return false;
+
+            return pawn.CanReserve(thing, 1, -1, null, true);
         }
 
         private bool CanRepair(Thing thing)
@@ -602,6 +686,39 @@ namespace PerspectiveShift
             if (!RestUtility.CanUseBedEver(pawn, bed.def)) return false;
 
             return pawn.CanReserveAndReach(bed, PathEndMode.OnCell, Danger.Deadly, bed.SleepingSlotsCount, 0);
+        }
+
+        private bool CanRecreateAt(Thing thing)
+        {
+            if (!PerspectiveShiftMod.settings.recreationCursor) return false;
+            if (thing is not Building || pawn.needs?.joy == null) return false;
+            if (pawn.CurJob != null && pawn.CurJob.targetA.Thing == thing && pawn.CurJobDef.joyKind != null) return false;
+            if (thing.TryGetComp<CompPowerTrader>() is { PowerOn: false }) return false;
+
+            var joyGivers = DefDatabase<JoyGiverDef>.AllDefsListForReading;
+            for (int i = 0; i < joyGivers.Count; i++)
+            {
+                var joyGiver = joyGivers[i];
+                if (joyGiver.thingDefs == null || !joyGiver.thingDefs.Contains(thing.def)) continue;
+
+                Job job;
+                if (joyGiver.Worker is JoyGiver_WatchBuilding)
+                {
+                    if (!WatchBuildingUtility.CalculateWatchCells(thing.def, thing.Position, thing.Rotation, pawn.Map).Contains(pawn.Position)) continue;
+                    job = JobMaker.MakeJob(joyGiver.jobDef, thing, pawn.Position);
+                }
+                else if (joyGiver.Worker is JoyGiver_InteractBuilding worker)
+                {
+                    job = worker.TryGivePlayJob(pawn, thing);
+                    if (job == null) continue;
+                }
+                else continue;
+
+                bool startable = JobTargetsInRange(job) && !job.def.HasModExtension<DisableLeftClickExtension>();
+                JobMaker.ReturnToPool(job);
+                if (startable) return true;
+            }
+            return false;
         }
 
         private static void DrawJobCursor(Vector2 center, Texture2D tex)

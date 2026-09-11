@@ -25,6 +25,7 @@ namespace PerspectiveShift
         public static readonly bool RimbodyAvailable;
         public static readonly bool RimbodyChunkWorkoutsAvailable;
         public static readonly bool AsAboveSoBelowAvailable;
+        public static readonly bool ProgressionAmmunitionAvailable;
         public static readonly bool DubsBadHygieneAvailable;
         public static readonly bool ThemingModAvailable;
 
@@ -76,6 +77,11 @@ namespace PerspectiveShift
         private static MethodInfo addIngredientMethod;
         private static Type processFilterType;
         private static FieldInfo allowedIngredientsField;
+
+        private static Type ammoRechargerType;
+        private static Type ammoCompType;
+        private static PropertyInfo rechargerAmmoTypeProperty;
+        private static MethodInfo canRechargeMethod;
 
         private static Type abStairsType;
         private static PropertyInfo abCounterpartsProperty;
@@ -163,6 +169,10 @@ namespace PerspectiveShift
             AsAboveSoBelowAvailable = ModsConfig.IsActive("astryl.AsAboveSoBelow2");
             if (AsAboveSoBelowAvailable && !InitAsAboveSoBelowCompat())
                 AsAboveSoBelowAvailable = false;
+
+            ProgressionAmmunitionAvailable = ModsConfig.IsActive("ferny.ProgressionAmmunition");
+            if (ProgressionAmmunitionAvailable && !InitProgressionAmmunitionCompat())
+                ProgressionAmmunitionAvailable = false;
 
             DubsBadHygieneAvailable = ModsConfig.IsActive("Dubwise.DubsBadHygiene") || ModsConfig.IsActive("Dubwise.DubsBadHygiene.Lite");
             if (DubsBadHygieneAvailable && !InitDBHCompat())
@@ -327,6 +337,40 @@ namespace PerspectiveShift
             if (!Require(ref doTryGiveJobCardioMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoCardioBuilding"), "DoTryGiveJob"), "DoTryGiveJob method", "Rimbody")) return false;
             if (!Require(ref doTryGiveJobBalanceMethod, () => AccessTools.Method(AccessTools.TypeByName("Maux36.Rimbody.JobGiver_DoBalanceBuilding"), "DoTryGiveTargetJob"), "DoTryGiveTargetJob method", "Rimbody")) return false;
             return true;
+        }
+
+        private static bool InitProgressionAmmunitionCompat()
+        {
+            if (!Require(ref ammoRechargerType, () => AccessTools.TypeByName("ProgressionAmmunition.Building_AmmoRecharger"), "Building_AmmoRecharger type", "ProgressionAmmunition")) return false;
+            if (!Require(ref ammoCompType, () => AccessTools.TypeByName("ProgressionAmmunition.CompAmmo"), "CompAmmo type", "ProgressionAmmunition")) return false;
+            if (!Require(ref rechargerAmmoTypeProperty, () => AccessTools.Property(ammoRechargerType, "RechargerAmmoType"), "RechargerAmmoType property", "ProgressionAmmunition")) return false;
+            if (!Require(ref canRechargeMethod, () => AccessTools.Method(ammoRechargerType, "CanRecharge"), "CanRecharge method", "ProgressionAmmunition")) return false;
+            return true;
+        }
+
+        public static bool TryGetAmmoRechargerType(Thing thing, Pawn pawn, out string ammoType)
+        {
+            ammoType = null;
+            if (!ProgressionAmmunitionAvailable || thing == null || pawn == null) return false;
+            if (!ammoRechargerType.IsInstanceOfType(thing)) return false;
+
+            var weapon = pawn.equipment?.Primary;
+            if (weapon == null) return false;
+
+            object ammoComp = null;
+            var comps = weapon.AllComps;
+            for (int i = 0; i < comps.Count; i++)
+            {
+                if (!ammoCompType.IsInstanceOfType(comps[i])) continue;
+                ammoComp = comps[i];
+                break;
+            }
+
+            if (ammoComp == null) return false;
+            if (!(bool)canRechargeMethod.Invoke(thing, new object[] { ammoComp })) return false;
+
+            ammoType = rechargerAmmoTypeProperty.GetValue(thing, null)?.ToString();
+            return !ammoType.NullOrEmpty();
         }
 
         private static bool InitAsAboveSoBelowCompat()

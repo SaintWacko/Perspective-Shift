@@ -59,7 +59,10 @@ namespace PerspectiveShift
         public bool harvestCursor = true;
         public bool cutCursor = true;
         public bool traverseCursor = true;
+        public bool reloadCursors = true;
+        public bool openCursor = true;
         public bool sleepCursor = true;
+        public bool recreationCursor = true;
         public bool researchCursor = true;
         public bool roofCursor = true;
         public bool fishingMinigame = true;
@@ -94,7 +97,10 @@ namespace PerspectiveShift
             Scribe_Values.Look(ref harvestCursor, "harvestCursor", true);
             Scribe_Values.Look(ref cutCursor, "cutCursor", true);
             Scribe_Values.Look(ref traverseCursor, "traverseCursor", true);
+            Scribe_Values.Look(ref reloadCursors, "reloadCursors", true);
+            Scribe_Values.Look(ref openCursor, "openCursor", true);
             Scribe_Values.Look(ref sleepCursor, "sleepCursor", true);
+            Scribe_Values.Look(ref recreationCursor, "recreationCursor", true);
             Scribe_Values.Look(ref researchCursor, "researchCursor", true);
             Scribe_Values.Look(ref roofCursor, "roofCursor", true);
             Scribe_Values.Look(ref fishingMinigame, "fishingMinigame", true);

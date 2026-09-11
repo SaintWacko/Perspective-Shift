@@ -254,8 +254,14 @@
     <PS_CutCursorDesc>Show a scythe cursor when holding left click would cut a plant marked for cutting.</PS_CutCursorDesc>
     <PS_TraverseCursor>Traverse cursor</PS_TraverseCursor>
     <PS_TraverseCursorDesc>Show a cursor when hovering stairs, ladders or an elevator the avatar can use to change level. Requires As above, So below II.</PS_TraverseCursorDesc>
+    <PS_ReloadCursors>Reload cursors</PS_ReloadCursors>
+    <PS_ReloadCursorsDesc>Show an arrow, ammo or charge cursor when hovering a resupply building that can reload the avatar's equipped weapon. Requires Progression: Ammunition.</PS_ReloadCursorsDesc>
+    <PS_OpenCursor>Open cursor</PS_OpenCursor>
+    <PS_OpenCursorDesc>Show a cursor when hovering something the avatar can open, such as a crate, a casket or a filled grave.</PS_OpenCursorDesc>
     <PS_SleepCursor>Sleep cursor</PS_SleepCursor>
     <PS_SleepCursorDesc>Swaps the cursor when hovering over a bed your character could sleep in. Hidden while you are already resting.</PS_SleepCursorDesc>
+    <PS_RecreationCursor>Recreation cursor</PS_RecreationCursor>
+    <PS_RecreationCursorDesc>Show a cursor when hovering a recreation building the avatar can use, like a chess or billiards table. Watched buildings such as a television show it while the avatar stands somewhere it can watch from.</PS_RecreationCursorDesc>
     <PS_ResearchCursor>Research cursor</PS_ResearchCursor>
     <PS_ResearchCursorDesc>Swaps the cursor when hovering over a research bench your character could work at. Hidden while you are already researching.</PS_ResearchCursorDesc>
     <PS_RoofCursor>Roof cursor</PS_RoofCursor>

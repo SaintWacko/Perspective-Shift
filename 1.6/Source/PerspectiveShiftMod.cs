@@ -159,7 +159,10 @@ namespace PerspectiveShift
                     settings.harvestCursor = d.harvestCursor;
                     settings.cutCursor = d.cutCursor;
                     settings.traverseCursor = d.traverseCursor;
+                    settings.reloadCursors = d.reloadCursors;
+                    settings.openCursor = d.openCursor;
                     settings.sleepCursor = d.sleepCursor;
+                    settings.recreationCursor = d.recreationCursor;
                     settings.researchCursor = d.researchCursor;
                     break;
 
@@ -260,7 +263,10 @@ namespace PerspectiveShift
             listing.CheckboxLabeled("PS_HarvestCursor".Translate(), ref settings.harvestCursor, "PS_HarvestCursorDesc".Translate());
             listing.CheckboxLabeled("PS_CutCursor".Translate(), ref settings.cutCursor, "PS_CutCursorDesc".Translate());
             listing.CheckboxLabeled("PS_TraverseCursor".Translate(), ref settings.traverseCursor, "PS_TraverseCursorDesc".Translate());
+            listing.CheckboxLabeled("PS_ReloadCursors".Translate(), ref settings.reloadCursors, "PS_ReloadCursorsDesc".Translate());
+            listing.CheckboxLabeled("PS_OpenCursor".Translate(), ref settings.openCursor, "PS_OpenCursorDesc".Translate());
             listing.CheckboxLabeled("PS_SleepCursor".Translate(), ref settings.sleepCursor, "PS_SleepCursorDesc".Translate());
+            listing.CheckboxLabeled("PS_RecreationCursor".Translate(), ref settings.recreationCursor, "PS_RecreationCursorDesc".Translate());
             listing.CheckboxLabeled("PS_ResearchCursor".Translate(), ref settings.researchCursor, "PS_ResearchCursorDesc".Translate());
         }
 
